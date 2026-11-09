@@ -1,0 +1,104 @@
+/* pages/tasks/tasks.wxss */
+.page {
+  padding-bottom: 40rpx;
+}
+
+/* 筛选条 */
+.project-filter,
+.status-filter {
+  white-space: nowrap;
+  padding: 16rpx 24rpx 0;
+}
+
+.status-filter {
+  padding-top: 12rpx;
+  padding-bottom: 8rpx;
+}
+
+.filter-chip {
+  display: inline-block;
+  padding: 10rpx 28rpx;
+  margin-right: 12rpx;
+  border-radius: 32rpx;
+  font-size: 26rpx;
+  color: #4e5969;
+  background: #ffffff;
+  transition: all 0.2s;
+}
+
+.filter-chip.active {
+  background: #4d7bfe;
+  color: #ffffff;
+  font-weight: 500;
+}
+
+/* 任务列表 */
+.task-list {
+  padding: 8rpx 24rpx;
+}
+
+.task-card {
+  background: #ffffff;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  margin-bottom: 16rpx;
+  box-shadow: 0 1rpx 6rpx rgba(29, 33, 41, 0.05);
+}
+
+.task-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+
+.task-title {
+  flex: 1;
+  font-size: 28rpx;
+  font-weight: 500;
+  color: #1d2129;
+  line-height: 1.5;
+  word-break: break-all;
+}
+
+/* 阻塞提示条 */
+.blocked-bar {
+  margin-top: 12rpx;
+  padding: 12rpx 16rpx;
+  background: rgba(242, 85, 85, 0.06);
+  border-radius: 8rpx;
+  border-left: 4rpx solid #f25555;
+}
+
+.blocked-text {
+  font-size: 24rpx;
+  color: #f25555;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: block;
+}
+
+.task-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 16rpx;
+}
+
+.task-tags {
+  display: flex;
+  gap: 8rpx;
+  flex-wrap: wrap;
+}
+
+.task-due {
+  font-size: 24rpx;
+  font-weight: 500;
+}
+
+/* 空状态 */
+.empty-icon {
+  font-size: 80rpx;
+  margin-bottom: 16rpx;
+}

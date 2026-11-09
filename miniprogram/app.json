@@ -1,0 +1,51 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/tasks/tasks",
+    "pages/task-detail/task-detail",
+    "pages/notifications/notifications",
+    "pages/profile/profile",
+    "pages/login/login"
+  ],
+  "window": {
+    "navigationBarBackgroundColor": "#4d7bfe",
+    "navigationBarTextStyle": "white",
+    "navigationBarTitleText": "破局",
+    "backgroundColor": "#f2f3f5",
+    "backgroundTextStyle": "dark"
+  },
+  "tabBar": {
+    "color": "#86909c",
+    "selectedColor": "#4d7bfe",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "white",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "首页",
+        "iconPath": "assets/tab-home.png",
+        "selectedIconPath": "assets/tab-home-active.png"
+      },
+      {
+        "pagePath": "pages/tasks/tasks",
+        "text": "任务",
+        "iconPath": "assets/tab-task.png",
+        "selectedIconPath": "assets/tab-task-active.png"
+      },
+      {
+        "pagePath": "pages/notifications/notifications",
+        "text": "通知",
+        "iconPath": "assets/tab-bell.png",
+        "selectedIconPath": "assets/tab-bell-active.png"
+      },
+      {
+        "pagePath": "pages/profile/profile",
+        "text": "我的",
+        "iconPath": "assets/tab-user.png",
+        "selectedIconPath": "assets/tab-user-active.png"
+      }
+    ]
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json"
+}

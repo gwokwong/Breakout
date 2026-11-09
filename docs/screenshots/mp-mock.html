@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>破局 Breakout 小程序预览</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0f0f1a;font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;display:flex;flex-wrap:wrap;gap:40px;padding:40px}
+.phone{width:375px;height:812px;background:#f2f3f5;border-radius:44px;overflow:hidden;position:relative;box-shadow:0 25px 80px rgba(0,0,0,.6);border:10px solid #1a1a2e;flex-shrink:0}
+.sb{height:44px;background:#4d7bfe;display:flex;align-items:center;justify-content:space-between;padding:0 22px;color:#fff;font-size:14px;font-weight:600;position:relative;z-index:10}
+.sb .t{font-size:15px;letter-spacing:.5px}
+.sb .ic{display:flex;gap:6px;align-items:center;font-size:12px}
+.nb{height:44px;background:#4d7bfe;display:flex;align-items:center;justify-content:center;color:#fff;font-size:17px;font-weight:600;position:relative}
+.nb .bk{position:absolute;left:14px;font-size:24px;font-weight:300;opacity:.9}
+.pc{overflow:hidden;position:relative}
+.pc.tab{height:641px}
+.pc.notab{height:724px}
+.pc.full{height:768px}
+.tb{height:83px;background:#fff;border-top:1px solid #e5e6eb;display:flex;position:absolute;bottom:0;left:0;right:0;padding-bottom:34px;z-index:20}
+.ti{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:10px;color:#86909c}
+.ti.on{color:#4d7bfe;font-weight:600}
+.ti .ic{font-size:20px;line-height:1}
+.card{background:#fff;border-radius:8px;padding:12px;margin:10px 12px;box-shadow:0 .5px 3px rgba(29,33,41,.05)}
+.ct{font-size:15px;font-weight:600;color:#1d2129;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between}
+.tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;line-height:1.5;white-space:nowrap}
+.tag-primary{background:rgba(77,123,254,.1);color:#4d7bfe}
+.tag-success{background:rgba(49,196,156,.1);color:#31c49c}
+.tag-warning{background:rgba(240,160,32,.1);color:#f0a020}
+.tag-danger{background:rgba(242,85,85,.1);color:#f25555}
+.tag-info{background:rgba(134,144,156,.1);color:#86909c}
+</style>
+</head>
+<body>
+
+<!-- ==================== 登录页 ==================== -->
+<div class="phone" id="page-login">
+<div style="height:812px;background:linear-gradient(180deg,#4d7bfe 0%,#6a8ffe 40%,#f2f3f5 100%);display:flex;flex-direction:column;align-items:center;padding-top:100px;position:relative">
+  <div style="display:flex;flex-direction:column;align-items:center;margin-bottom:60px">
+    <div style="width:60px;height:60px;border-radius:15px;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;color:#fff;margin-bottom:12px">破</div>
+    <div style="font-size:22px;font-weight:700;color:#fff;letter-spacing:1px">破局</div>
+    <div style="font-size:13px;color:rgba(255,255,255,.8);margin-top:4px">团队任务协作管理平台</div>
+  </div>
+  <div style="width:100%;padding:0 30px">
+    <button style="width:100%;height:48px;background:#fff;color:#1d2129;font-size:16px;font-weight:500;border-radius:24px;border:none;box-shadow:0 4px 12px rgba(29,33,41,.12);cursor:pointer">微信一键登录</button>
+    <div style="text-align:center;font-size:12px;color:rgba(255,255,255,.7);margin:24px 0 16px">—— 手机号登录 ——</div>
+    <div style="margin-bottom:12px"><input style="width:100%;height:48px;background:rgba(255,255,255,.95);border-radius:24px;padding:0 20px;font-size:14px;border:none;outline:none" placeholder="请输入手机号" value="13800000001"></div>
+    <div style="margin-bottom:8px"><input style="width:100%;height:48px;background:rgba(255,255,255,.95);border-radius:24px;padding:0 20px;font-size:14px;border:none;outline:none" placeholder="请输入密码" value="••••••"></div>
+    <button style="width:100%;height:48px;background:#4d7bfe;color:#fff;font-size:16px;border-radius:24px;border:none;margin-top:8px;cursor:pointer">登录</button>
+  </div>
+  <div style="position:absolute;bottom:40px;left:0;right:0;text-align:center;font-size:11px;color:rgba(255,255,255,.6)">破局 v1.0.0 · 让团队协作更高效</div>
+</div>
+</div>
+
+<!-- ==================== 首页 ==================== -->
+<div class="phone" id="page-index">
+<div class="sb"><span class="t">9:41</span><span class="ic"><span>●●●</span><span>📶</span><span>🔋</span></span></div>
+<div class="nb">破局</div>
+<div class="pc tab">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 16px 8px">
+    <div><div style="font-size:18px;font-weight:700;color:#1d2129">你好，张三</div><div style="font-size:12px;color:#86909c;margin-top:2px">今天也要加油哦</div></div>
+    <div style="position:relative;width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:#fff;border-radius:50%;box-shadow:0 1px 4px rgba(29,33,41,.06);font-size:18px">🔔<span style="position:absolute;top:-3px;right:-3px;min-width:16px;height:16px;line-height:16px;padding:0 4px;border-radius:8px;background:#f25555;color:#fff;font-size:10px;text-align:center">3</span></div>
+  </div>
+  <div style="display:flex;align-items:center;background:#fff;border-radius:8px;padding:14px 8px;margin:8px 12px;box-shadow:0 .5px 3px rgba(29,33,41,.05)">
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center"><div style="font-size:22px;font-weight:700;color:#86909c">3</div><div style="font-size:11px;color:#86909c;margin-top:2px">待办</div></div>
+    <div style="width:1px;height:28px;background:#e5e6eb"></div>
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center"><div style="font-size:22px;font-weight:700;color:#4d7bfe">5</div><div style="font-size:11px;color:#86909c;margin-top:2px">进行中</div></div>
+    <div style="width:1px;height:28px;background:#e5e6eb"></div>
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center"><div style="font-size:22px;font-weight:700;color:#f0a020">2</div><div style="font-size:11px;color:#86909c;margin-top:2px">待复核/验收</div></div>
+    <div style="width:1px;height:28px;background:#e5e6eb"></div>
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center"><div style="font-size:22px;font-weight:700;color:#31c49c">12</div><div style="font-size:11px;color:#86909c;margin-top:2px">已完成</div></div>
+  </div>
+  <div class="card">
+    <div class="ct"><span>⚠️ 阻塞预警</span><span class="tag tag-danger">3个</span></div>
+    <div style="padding:10px 0;border-bottom:1px solid #f2f3f5">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><div style="flex:1;font-size:14px;color:#1d2129;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">修复支付回调超时问题</div><span class="tag tag-danger">阻塞3天</span></div>
+      <div style="display:flex;gap:8px;margin-top:4px;font-size:12px;color:#86909c"><span>风险分 85</span><span style="color:#f25555;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">等待第三方接口文档</span></div>
+    </div>
+    <div style="padding:10px 0">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><div style="flex:1;font-size:14px;color:#1d2129;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">首页轮播图加载异常</div><span class="tag tag-danger">阻塞2天</span></div>
+      <div style="display:flex;gap:8px;margin-top:4px;font-size:12px;color:#86909c"><span>风险分 72</span><span style="color:#f25555">CDN配置待确认</span></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="ct"><span>📋 最近任务</span><span style="font-size:12px;color:#4d7bfe">全部 →</span></div>
+    <div style="padding:10px 0;border-bottom:1px solid #f2f3f5">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><div style="flex:1;font-size:14px;color:#1d2129;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">用户管理模块接口联调</div><span class="tag tag-primary">进行中</span></div>
+      <div style="display:flex;gap:8px;margin-top:4px;font-size:12px;color:#86909c"><span class="tag tag-warning">高优先级</span><span style="color:#f25555">剩2天</span></div>
+    </div>
+    <div style="padding:10px 0;border-bottom:1px solid #f2f3f5">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><div style="flex:1;font-size:14px;color:#1d2129;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">设计稿评审会议</div><span class="tag tag-warning">待复核</span></div>
+      <div style="display:flex;gap:8px;margin-top:4px;font-size:12px;color:#86909c"><span class="tag tag-success">中优先级</span></div>
+    </div>
+    <div style="padding:10px 0">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><div style="flex:1;font-size:14px;color:#1d2129;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">数据库索引优化</div><span class="tag tag-success">已完成</span></div>
+      <div style="display:flex;gap:8px;margin-top:4px;font-size:12px;color:#86909c"><span class="tag tag-success">低优先级</span></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="ct"><span>📁 我的项目</span></div>
+    <div style="padding:10px 0;border-bottom:1px solid #f2f3f5"><div style="font-size:14px;font-weight:500;color:#1d2129">官网改版项目</div><div style="font-size:12px;color:#86909c;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">公司官网全面升级改版，提升品牌形象</div></div>
+    <div style="padding:10px 0"><div style="font-size:14px;font-weight:500;color:#1d2129">小程序开发</div><div style="font-size:12px;color:#86909c;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">团队协作小程序端开发</div></div>
+  </div>
+</div>
+<div class="tb">
+  <div class="ti on"><span class="ic">🏠</span>首页</div>
+  <div class="ti"><span class="ic">📋</span>任务</div>
+  <div class="ti"><span class="ic">🔔</span>通知</div>
+  <div class="ti"><span class="ic">👤</span>我的</div>
+</div>
+</div>
+
+<!-- ==================== 任务列表 ==================== -->
+<div class="phone" id="page-tasks">
+<div class="sb"><span class="t">9:41</span><span class="ic"><span>●●●</span><span>📶</span><span>🔋</span></span></div>
+<div class="nb">任务</div>
+<div class="pc tab">
+  <div style="white-space:nowrap;padding:8px 12px 0;display:flex;gap:6px">
+    <span style="display:inline-block;padding:5px 14px;border-radius:16px;font-size:13px;background:#4d7bfe;color:#fff;font-weight:500">全部项目</span>
+    <span style="display:inline-block;padding:5px 14px;border-radius:16px;font-size:13px;color:#4e5969;background:#fff">官网改版</span>
+    <span style="display:inline-block;padding:5px 14px;border-radius:16px;font-size:13px;color:#4e5969;background:#fff">小程序开发</span>
+  </div>
+  <div style="white-space:nowrap;padding:6px 12px 4px;display:flex;gap:6px">
+    <span style="display:inline-block;padding:5px 14px;border-radius:16px;font-size:13px;background:#4d7bfe;color:#fff;font-weight:500">全部</span>
+    <span style="display:inline-block;padding:5px 14px;border-radius:16px;font-size:13px;color:#4e5969;background:#fff">待办</span>
+    <span style="display:inline-block;padding:5px 14px;border-radius:16px;font-size:13px;color:#4e5969;background:#fff">进行中</span>
+    <span style="display:inline-block;padding:5px 14px;border-radius:16px;font-size:13px;color:#4e5969;background:#fff">待复核</span>
+    <span style="display:inline-block;padding:5px 14px;border-radius:16px;font-size:13px;color:#4e5969;background:#fff">已完成</span>
+  </div>
+  <div style="padding:4px 12px">
+    <div style="background:#fff;border-radius:8px;padding:12px;margin-bottom:8px;box-shadow:0 .5px 3px rgba(29,33,41,.05)">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+        <div style="flex:1;font-size:14px;font-weight:500;color:#1d2129;line-height:1.5">修复支付回调超时问题</div>
+        <span class="tag tag-primary">进行中</span>
+      </div>
+      <div style="margin-top:6px;padding:6px 8px;background:rgba(242,85,85,.06);border-radius:4px;border-left:2px solid #f25555"><span style="font-size:12px;color:#f25555;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block">⚠ 阻塞3天：等待第三方接口文档</span></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px">
+        <div style="display:flex;gap:4px"><span class="tag tag-danger">高优先级</span><span class="tag tag-info">预估 3天</span></div>
+        <span style="font-size:12px;font-weight:500;color:#f25555">已逾期1天</span>
+      </div>
+    </div>
+    <div style="background:#fff;border-radius:8px;padding:12px;margin-bottom:8px;box-shadow:0 .5px 3px rgba(29,33,41,.05)">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+        <div style="flex:1;font-size:14px;font-weight:500;color:#1d2129;line-height:1.5">用户管理模块接口联调</div>
+        <span class="tag tag-primary">进行中</span>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px">
+        <div style="display:flex;gap:4px"><span class="tag tag-warning">高优先级</span><span class="tag tag-info">预估 5天</span></div>
+        <span style="font-size:12px;font-weight:500;color:#f0a020">剩2天</span>
+      </div>
+    </div>
+    <div style="background:#fff;border-radius:8px;padding:12px;margin-bottom:8px;box-shadow:0 .5px 3px rgba(29,33,41,.05)">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+        <div style="flex:1;font-size:14px;font-weight:500;color:#1d2129;line-height:1.5">首页轮播图组件开发</div>
+        <span class="tag tag-info">待办</span>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px">
+        <div style="display:flex;gap:4px"><span class="tag tag-success">中优先级</span><span class="tag tag-info">预估 2天</span></div>
+        <span style="font-size:12px;font-weight:500;color:#86909c">剩5天</span>
+      </div>
+    </div>
+    <div style="background:#fff;border-radius:8px;padding:12px;margin-bottom:8px;box-shadow:0 .5px 3px rgba(29,33,41,.05)">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+        <div style="flex:1;font-size:14px;font-weight:500;color:#1d2129;line-height:1.5">设计稿评审会议</div>
+        <span class="tag tag-warning">待复核</span>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px">
+        <div style="display:flex;gap:4px"><span class="tag tag-success">中优先级</span></div>
+        <span style="font-size:12px;font-weight:500;color:#86909c">今天截止</span>
+      </div>
+    </div>
+    <div style="text-align:center;padding:10px;color:#86909c;font-size:12px">没有更多了</div>
+  </div>
+</div>
+<div class="tb">
+  <div class="ti"><span class="ic">🏠</span>首页</div>
+  <div class="ti on"><span class="ic">📋</span>任务</div>
+  <div class="ti"><span class="ic">🔔</span>通知</div>
+  <div class="ti"><span class="ic">👤</span>我的</div>
+</div>
+</div>
+
+<!-- ==================== 任务详情 ==================== -->
+<div class="phone" id="page-detail">
+<div class="sb"><span class="t">9:41</span><span class="ic"><span>●●●</span><span>📶</span><span>🔋</span></span></div>
+<div class="nb"><span class="bk">‹</span>任务详情</div>
+<div class="pc notab">
+  <div style="background:#fff;padding:16px 12px;margin-bottom:8px">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+      <div style="flex:1;font-size:17px;font-weight:700;color:#1d2129;line-height:1.5">修复支付回调超时问题</div>
+      <span class="tag tag-primary">进行中</span>
+    </div>
+    <div style="display:flex;gap:6px;margin-top:8px"><span class="tag tag-danger">高优先级</span><span class="tag tag-info">官网改版</span></div>
+  </div>
+  <div style="background:rgba(242,85,85,.06);border-left:3px solid #f25555;border-radius:6px;padding:12px;margin:0 12px 8px">
+    <div style="font-size:14px;font-weight:600;color:#f25555;margin-bottom:4px">⚠ 阻塞中（3天）</div>
+    <div style="font-size:13px;color:#4e5969;line-height:1.6;margin-bottom:8px">等待第三方支付平台提供回调接口文档，无法继续开发</div>
+    <span style="display:inline-block;background:#31c49c;color:#fff;font-size:12px;padding:6px 16px;border-radius:4px">解除阻塞</span>
+  </div>
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0"><span style="font-size:13px;color:#86909c">负责人</span><span style="font-size:13px;color:#1d2129;font-weight:500">张三</span></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0"><span style="font-size:13px;color:#86909c">开始日期</span><span style="font-size:13px;color:#1d2129;font-weight:500">2026-11-03</span></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0"><span style="font-size:13px;color:#86909c">截止日期</span><span style="font-size:13px;color:#f25555;font-weight:500">2026-11-08（已逾期）</span></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0"><span style="font-size:13px;color:#86909c">预估工时</span><span style="font-size:13px;color:#1d2129;font-weight:500">3天</span></div>
+  </div>
+  <div class="card">
+    <div style="font-size:15px;font-weight:600;color:#1d2129;margin-bottom:8px">任务描述</div>
+    <div style="font-size:13px;color:#4e5969;line-height:1.8">支付回调接口在高峰期出现超时问题，需要排查原因并优化。涉及第三方支付平台的回调机制，需要等待接口文档后进行联调测试。</div>
+  </div>
+  <div style="display:flex;gap:8px;padding:0 12px;margin-bottom:8px">
+    <span style="flex:1;height:40px;line-height:40px;text-align:center;background:#31c49c;color:#fff;font-size:13px;border-radius:6px">开始任务</span>
+    <span style="flex:1;height:40px;line-height:40px;text-align:center;background:#fff;color:#4d7bfe;border:1px solid #4d7bfe;font-size:13px;border-radius:6px">提交复核</span>
+  </div>
+  <div class="card">
+    <div style="font-size:15px;font-weight:600;color:#1d2129;margin-bottom:8px">评论 (2)</div>
+    <div style="padding:10px 0;border-bottom:1px solid #f2f3f5">
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:13px;font-weight:500;color:#1d2129">李四</span><span style="font-size:11px;color:#c9cdd4">11-06 14:30</span></div>
+      <div style="font-size:13px;color:#4e5969;line-height:1.6">已经联系了第三方技术支持，文档预计明天提供</div>
+    </div>
+    <div style="padding:10px 0">
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:13px;font-weight:500;color:#1d2129">王五</span><span style="font-size:11px;color:#c9cdd4">11-07 09:15</span></div>
+      <div style="font-size:13px;color:#4e5969;line-height:1.6">收到，文档到了及时同步群里</div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ==================== 通知列表 ==================== -->
+<div class="phone" id="page-notifications">
+<div class="sb"><span class="t">9:41</span><span class="ic"><span>●●●</span><span>📶</span><span>🔋</span></span></div>
+<div class="nb">通知</div>
+<div class="pc tab">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px">
+    <div style="display:flex;gap:6px">
+      <span style="padding:5px 14px;border-radius:16px;font-size:13px;background:#4d7bfe;color:#fff;font-weight:500">全部</span>
+      <span style="padding:5px 14px;border-radius:16px;font-size:13px;color:#4e5969;background:#fff">未读</span>
+    </div>
+    <span style="font-size:12px;color:#4d7bfe">全部已读</span>
+  </div>
+  <div style="padding:0 12px">
+    <div style="display:flex;align-items:flex-start;background:#fff;border-radius:8px;padding:12px;margin-bottom:6px;box-shadow:0 .5px 3px rgba(29,33,41,.05);border-left:3px solid #4d7bfe">
+      <div style="width:8px;height:8px;border-radius:50%;background:#f25555;margin-top:5px;margin-right:8px;flex-shrink:0"></div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:14px;color:#1d2129;line-height:1.5;font-weight:500">张三 提交了任务「用户管理模块接口联调」待您复核</div>
+        <div style="font-size:11px;color:#c9cdd4;margin-top:6px">10分钟前</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:flex-start;background:#fff;border-radius:8px;padding:12px;margin-bottom:6px;box-shadow:0 .5px 3px rgba(29,33,41,.05);border-left:3px solid #4d7bfe">
+      <div style="width:8px;height:8px;border-radius:50%;background:#f25555;margin-top:5px;margin-right:8px;flex-shrink:0"></div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:14px;color:#1d2129;line-height:1.5;font-weight:500">任务「修复支付回调超时问题」已阻塞3天，请及时处理</div>
+        <div style="font-size:11px;color:#c9cdd4;margin-top:6px">2小时前</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:flex-start;background:#fff;border-radius:8px;padding:12px;margin-bottom:6px;box-shadow:0 .5px 3px rgba(29,33,41,.05);border-left:3px solid #4d7bfe">
+      <div style="width:8px;height:8px;border-radius:50%;background:#f25555;margin-top:5px;margin-right:8px;flex-shrink:0"></div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:14px;color:#1d2129;line-height:1.5;font-weight:500">李四 给您分配了新任务「首页轮播图组件开发」</div>
+        <div style="font-size:11px;color:#c9cdd4;margin-top:6px">昨天 16:20</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:flex-start;background:#fff;border-radius:8px;padding:12px;margin-bottom:6px;box-shadow:0 .5px 3px rgba(29,33,41,.05)">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:14px;color:#1d2129;line-height:1.5">王五 通过了任务「数据库索引优化」的验收</div>
+        <div style="font-size:11px;color:#c9cdd4;margin-top:6px">11-07 10:00</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:flex-start;background:#fff;border-radius:8px;padding:12px;margin-bottom:6px;box-shadow:0 .5px 3px rgba(29,33,41,.05)">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:14px;color:#1d2129;line-height:1.5">项目「官网改版项目」里程碑更新：第二阶段完成</div>
+        <div style="font-size:11px;color:#c9cdd4;margin-top:6px">11-06 18:30</div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="tb">
+  <div class="ti"><span class="ic">🏠</span>首页</div>
+  <div class="ti"><span class="ic">📋</span>任务</div>
+  <div class="ti on"><span class="ic">🔔</span>通知</div>
+  <div class="ti"><span class="ic">👤</span>我的</div>
+</div>
+</div>
+
+<!-- ==================== 我的 ==================== -->
+<div class="phone" id="page-profile">
+<div class="sb"><span class="t">9:41</span><span class="ic"><span>●●●</span><span>📶</span><span>🔋</span></span></div>
+<div class="nb">我的</div>
+<div class="pc tab">
+  <div style="background:linear-gradient(135deg,#4d7bfe,#6a8ffe);border-radius:0 0 20px 20px;padding:20px 16px;display:flex;align-items:center;gap:12px">
+    <div style="width:56px;height:56px;border-radius:50%;background:rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;color:#fff;flex-shrink:0">张</div>
+    <div style="flex:1">
+      <div style="font-size:18px;font-weight:600;color:#fff;display:flex;align-items:center;gap:6px">张三 <span style="font-size:12px">✏️</span></div>
+      <div style="display:flex;gap:6px;margin-top:6px">
+        <span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;background:rgba(255,255,255,.25);color:#fff">项目管理员</span>
+        <span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;background:rgba(255,255,255,.25);color:#fff">研发一部</span>
+      </div>
+    </div>
+  </div>
+  <div style="display:flex;background:#fff;border-radius:8px;margin:12px;padding:16px 0;box-shadow:0 .5px 3px rgba(29,33,41,.05)">
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center"><div style="font-size:22px;font-weight:700;color:#4d7bfe">5</div><div style="font-size:12px;color:#86909c;margin-top:2px">进行中任务</div></div>
+    <div style="width:1px;height:28px;background:#e5e6eb"></div>
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center"><div style="font-size:22px;font-weight:700;color:#f25555">3</div><div style="font-size:12px;color:#86909c;margin-top:2px">未读通知</div></div>
+  </div>
+  <div style="background:#fff;border-radius:8px;margin:0 12px;box-shadow:0 .5px 3px rgba(29,33,41,.05);overflow:hidden">
+    <div style="display:flex;align-items:center;padding:14px 16px;border-bottom:1px solid #f2f3f5">
+      <span style="font-size:18px;margin-right:10px">👤</span><span style="flex:1;font-size:14px;color:#1d2129">修改昵称</span><span style="font-size:16px;color:#c9cdd4">›</span>
+    </div>
+    <div style="display:flex;align-items:center;padding:14px 16px">
+      <span style="font-size:18px;margin-right:10px">🔔</span><span style="flex:1;font-size:14px;color:#1d2129">通知设置</span><span style="font-size:16px;color:#c9cdd4">›</span>
+    </div>
+  </div>
+  <div style="margin:16px 12px">
+    <div style="height:44px;line-height:44px;text-align:center;background:#fff;color:#f25555;font-size:15px;border-radius:8px;box-shadow:0 .5px 3px rgba(29,33,41,.05)">退出登录</div>
+  </div>
+  <div style="text-align:center;font-size:11px;color:#c9cdd4;margin-top:8px">破局 v1.0.0</div>
+</div>
+<div class="tb">
+  <div class="ti"><span class="ic">🏠</span>首页</div>
+  <div class="ti"><span class="ic">📋</span>任务</div>
+  <div class="ti"><span class="ic">🔔</span>通知</div>
+  <div class="ti on"><span class="ic">👤</span>我的</div>
+</div>
+</div>
+
+</body>
+</html>

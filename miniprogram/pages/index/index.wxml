@@ -1,0 +1,94 @@
+<!-- pages/index/index.wxml -->
+<view class="page">
+  <!-- 顶部问候 -->
+  <view class="greeting">
+    <view class="greeting-left">
+      <view class="greeting-hello">你好，{{userInfo.nickname || '用户'}}</view>
+      <view class="greeting-sub">今天也要加油哦</view>
+    </view>
+    <view class="greeting-bell" bindtap="goNotifications">
+      <text class="bell-icon">🔔</text>
+      <view class="badge" wx:if="{{unreadCount > 0}}">{{unreadCount > 99 ? '99+' : unreadCount}}</view>
+    </view>
+  </view>
+
+  <!-- 我的任务统计 -->
+  <view class="stats-card">
+    <view class="stats-item" bindtap="goTasks">
+      <view class="stats-num color-info">{{myStats.todo}}</view>
+      <view class="stats-label">待办</view>
+    </view>
+    <view class="stats-divider"></view>
+    <view class="stats-item" bindtap="goTasks">
+      <view class="stats-num color-primary">{{myStats.inProgress}}</view>
+      <view class="stats-label">进行中</view>
+    </view>
+    <view class="stats-divider"></view>
+    <view class="stats-item" bindtap="goTasks">
+      <view class="stats-num color-warning">{{myStats.review}}</view>
+      <view class="stats-label">待复核/验收</view>
+    </view>
+    <view class="stats-divider"></view>
+    <view class="stats-item" bindtap="goTasks">
+      <view class="stats-num color-success">{{myStats.done}}</view>
+      <view class="stats-label">已完成</view>
+    </view>
+  </view>
+
+  <!-- 阻塞预警 -->
+  <view class="card" wx:if="{{blockedTasks.length > 0}}">
+    <view class="card-header">
+      <view class="card-title">
+        <text class="title-icon">⚠️</text> 阻塞预警
+      </view>
+      <view class="card-extra tag tag-danger">{{blockedCount}}个</view>
+    </view>
+    <view class="task-item" wx:for="{{blockedTasks}}" wx:key="id" bindtap="goTaskDetail" data-id="{{item.id}}">
+      <view class="task-row">
+        <view class="task-title">{{item.title}}</view>
+        <view class="tag tag-danger">阻塞{{item.blockedDays}}天</view>
+      </view>
+      <view class="task-meta">
+        <text>风险分 {{item.riskScore}}</text>
+        <text wx:if="{{item.blocked_reason}}" class="blocked-reason">{{item.blocked_reason}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 最近任务 -->
+  <view class="card">
+    <view class="card-header">
+      <view class="card-title">
+        <text class="title-icon">📋</text> 最近任务
+      </view>
+      <view class="card-extra color-primary" bindtap="goTasks">全部 →</view>
+    </view>
+    <view wx:if="{{recentTasks.length === 0}}" class="empty">暂无任务</view>
+    <view class="task-item" wx:for="{{recentTasks}}" wx:key="id" bindtap="goTaskDetail" data-id="{{item.id}}">
+      <view class="task-row">
+        <view class="task-title">{{item.title}}</view>
+        <view class="tag" style="background:{{item.statusColor}}1a;color:{{item.statusColor}}">{{item.statusLabel}}</view>
+      </view>
+      <view class="task-meta">
+        <view class="meta-left">
+          <view class="tag tag-{{item.priority === 1 ? 'danger' : item.priority === 2 ? 'warning' : 'success'}}">{{item.priorityLabel}}优先级</view>
+          <text wx:if="{{item.dueText}}" style="color:{{item.dueColor}}">{{item.dueText}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 我的项目 -->
+  <view class="card">
+    <view class="card-header">
+      <view class="card-title">
+        <text class="title-icon">📁</text> 我的项目
+      </view>
+    </view>
+    <view wx:if="{{projects.length === 0}}" class="empty">暂无项目</view>
+    <view class="project-item" wx:for="{{projects}}" wx:key="id">
+      <view class="project-name">{{item.name}}</view>
+      <view class="project-desc" wx:if="{{item.description}}">{{item.description}}</view>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,53 @@
+// ============================================
+// Art Design Pro 主题变量系统
+// ============================================
+
+// 主色
+$ad-primary: #4d7bfe;
+$ad-primary-light: #6c8fff;
+$ad-primary-lighter: #eef2ff;
+$ad-primary-dark: #3a5fe0;
+
+// 功能色
+$ad-success: #31c49c;
+$ad-warning: #f0a020;
+$ad-danger: #f25555;
+$ad-info: #8b95a5;
+
+// 文字色
+$ad-text-primary: #1d2129;
+$ad-text-regular: #4e5969;
+$ad-text-secondary: #86909c;
+$ad-text-placeholder: #c9cdd4;
+
+// 背景色
+$ad-bg-page: #f2f3f5;
+$ad-bg-card: #ffffff;
+$ad-bg-sidebar: #1d2129;
+$ad-bg-sidebar-active: rgba(255, 255, 255, 0.08);
+$ad-bg-hover: #f2f3f5;
+
+// 边框
+$ad-border: #e5e6eb;
+$ad-border-light: #f2f3f5;
+
+// 阴影
+$ad-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.03), 0 1px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px rgba(0, 0, 0, 0.02);
+$ad-shadow: 0 4px 10px rgba(0, 0, 0, 0.04), 0 0 6px rgba(0, 0, 0, 0.02);
+$ad-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.08);
+$ad-shadow-hover: 0 6px 16px rgba(0, 0, 0, 0.08);
+
+// 圆角
+$ad-radius-sm: 6px;
+$ad-radius: 10px;
+$ad-radius-lg: 14px;
+$ad-radius-xl: 20px;
+
+// 布局
+$ad-sidebar-width: 232px;
+$ad-sidebar-collapsed-width: 64px;
+$ad-header-height: 60px;
+$ad-tabs-height: 40px;
+
+// 过渡
+$ad-transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);

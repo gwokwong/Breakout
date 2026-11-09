@@ -1,0 +1,64 @@
+<!-- pages/tasks/tasks.wxml -->
+<view class="page">
+  <!-- 项目筛选 -->
+  <scroll-view class="project-filter" scroll-x>
+    <view
+      class="filter-chip {{currentProject === item.id ? 'active' : ''}}"
+      wx:for="{{projects}}"
+      wx:key="id"
+      bindtap="onProjectChange"
+      data-value="{{item.id}}"
+    >{{item.name}}</view>
+  </scroll-view>
+
+  <!-- 状态筛选 -->
+  <scroll-view class="status-filter" scroll-x>
+    <view
+      class="filter-chip {{currentStatus === item.value ? 'active' : ''}}"
+      wx:for="{{statusTabs}}"
+      wx:key="value"
+      bindtap="onStatusChange"
+      data-value="{{item.value}}"
+    >{{item.label}}</view>
+  </scroll-view>
+
+  <!-- 任务列表 -->
+  <view class="task-list">
+    <view wx:if="{{loading && tasks.length === 0}}" class="loading-box">加载中...</view>
+
+    <view wx:if="{{!loading && tasks.length === 0}}" class="empty">
+      <view class="empty-icon">📝</view>
+      <view>暂无任务</view>
+    </view>
+
+    <view
+      class="task-card"
+      wx:for="{{tasks}}"
+      wx:key="id"
+      bindtap="goTaskDetail"
+      data-id="{{item.id}}"
+    >
+      <view class="task-top">
+        <view class="task-title">{{item.title}}</view>
+        <view class="tag" style="background:{{item.statusColor}}1a;color:{{item.statusColor}}">{{item.statusLabel}}</view>
+      </view>
+
+      <!-- 阻塞提示 -->
+      <view class="blocked-bar" wx:if="{{item.blocked_reason}}">
+        <text class="blocked-text">⚠ 阻塞{{item.blockedDays}}天：{{item.blocked_reason}}</text>
+      </view>
+
+      <view class="task-bottom">
+        <view class="task-tags">
+          <view class="tag tag-{{item.priority === 1 ? 'danger' : item.priority === 2 ? 'warning' : 'success'}}">{{item.priorityLabel}}优先级</view>
+          <view class="tag tag-info" wx:if="{{item.estimateText}}">预估 {{item.estimateText}}</view>
+        </view>
+        <view class="task-due" wx:if="{{item.dueText}}" style="color:{{item.dueColor}}">{{item.dueText}}</view>
+      </view>
+    </view>
+
+    <!-- 加载更多 -->
+    <view wx:if="{{hasMore && tasks.length > 0}}" class="loading-box">上拉加载更多</view>
+    <view wx:if="{{!hasMore && tasks.length > 0}}" class="loading-box">没有更多了</view>
+  </view>
+</view>

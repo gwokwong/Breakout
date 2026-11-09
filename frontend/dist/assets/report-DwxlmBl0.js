@@ -1,0 +1,1 @@
+import{at as e}from"./index-CKhlIYqs.js";function a(t){return e.get("/report/weekly",{params:t})}function n(t){return e.post("/report/weekly/generate",t)}function o(t){return e.get("/report/statistics",{params:{project_id:t}})}function s(t){return e.get("/report/gantt",{params:{project_id:t}})}export{s as a,a as b,n as c,o as g};

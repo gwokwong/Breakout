@@ -1,0 +1,147 @@
+<!-- pages/task-detail/task-detail.wxml -->
+<view class="page" wx:if="{{!loading && task}}">
+  <!-- 任务头部 -->
+  <view class="detail-header">
+    <view class="header-top">
+      <view class="task-title">{{task.title}}</view>
+      <view class="tag" style="background:{{statusColor}}1a;color:{{statusColor}}">{{statusLabel}}</view>
+    </view>
+    <view class="header-tags">
+      <view class="tag tag-{{task.priority === 1 ? 'danger' : task.priority === 2 ? 'warning' : 'success'}}">{{priorityLabel}}优先级</view>
+      <view class="tag tag-{{riskLevel.tagClass}}">风险 {{riskScore}} · {{riskLevel.label}}</view>
+      <view wx:if="{{task.is_milestone}}" class="tag tag-primary">里程碑</view>
+    </view>
+  </view>
+
+  <!-- 阻塞警告 -->
+  <view class="blocked-alert" wx:if="{{task.blocked_reason}}">
+    <view class="alert-title">⚠ 任务已阻塞 {{blockedDays}} 天</view>
+    <view class="alert-content">{{task.blocked_reason}}</view>
+    <button class="btn-unblock" wx:if="{{canUnblock}}" bindtap="handleUnblock">解除阻塞</button>
+  </view>
+
+  <!-- 任务信息 -->
+  <view class="card">
+  <view class="card-title">任务信息</view>
+    <view class="info-row">
+      <text class="info-label">负责人</text>
+      <text class="info-value">{{task.assignee?.nickname || '未分配'}}</text>
+    </view>
+    <view class="info-row">
+      <text class="info-label">复核人</text>
+      <text class="info-value">{{task.reviewer?.nickname || '未指定'}}</text>
+    </view>
+    <view class="info-row">
+      <text class="info-label">验收人</text>
+      <text class="info-value">{{task.acceptor?.nickname || '未指定'}}</text>
+    </view>
+    <view class="info-row">
+      <text class="info-label">创建人</text>
+      <text class="info-value">{{task.creator?.nickname || '-'}}</text>
+    </view>
+    <view class="divider"></view>
+    <view class="info-row">
+      <text class="info-label">开始日期</text>
+      <text class="info-value">{{startDateText || '未设置'}}</text>
+    </view>
+    <view class="info-row">
+      <text class="info-label">截止日期</text>
+      <text class="info-value {{dueColor ? '' : ''}}" style="{{dueColor ? 'color:' + dueColor : ''}}">{{dueDateText || '未设置'}}</text>
+    </view>
+    <view class="info-row" wx:if="{{dueText}}">
+      <text class="info-label">截止状态</text>
+      <text class="info-value" style="color:{{dueColor}}">{{dueText}}</text>
+    </view>
+    <view class="divider"></view>
+    <view class="info-row">
+      <text class="info-label">预估工时</text>
+      <text class="info-value">{{task.estimate ? task.estimate + ' 小时' : '未设置'}}</text>
+    </view>
+    <view class="info-row">
+      <text class="info-label">实际工时</text>
+      <text class="info-value">{{task.actual ? task.actual + ' 小时' : '-'}}</text>
+    </view>
+  </view>
+
+  <!-- 任务描述 -->
+  <view class="card" wx:if="{{task.description}}">
+    <view class="card-title">任务描述</view>
+    <view class="desc-content">{{task.description}}</view>
+  </view>
+
+  <!-- 操作区 -->
+  <view class="action-bar">
+    <button class="btn-action btn-primary" wx:if="{{canStart}}" bindtap="handleStart">开始任务</button>
+    <button class="btn-action btn-primary" wx:if="{{canSubmit}}" bindtap="handleSubmitReview">提交复核</button>
+    <button class="btn-action btn-primary" wx:if="{{canReview}}" bindtap="handleReviewPass">复核通过</button>
+    <button class="btn-action btn-outline" wx:if="{{canReview}}" bindtap="setData" data-showReviewModal="{{true}}">复核退回</button>
+    <button class="btn-action btn-primary" wx:if="{{canAccept}}" bindtap="handleAcceptPass">验收通过</button>
+    <button class="btn-action btn-outline" wx:if="{{canAccept}}" bindtap="handleAcceptFail">验收退回</button>
+    <button class="btn-action btn-outline" wx:if="{{canClose}}" bindtap="showClose">关闭任务</button>
+    <button class="btn-action btn-danger" wx:if="{{canBlock}}" bindtap="showBlock">标记阻塞</button>
+    <button class="btn-action btn-outline" bindtap="showComment">添加评论</button>
+  </view>
+
+  <!-- 评论列表 -->
+  <view class="card">
+    <view class="card-title">评论 ({{comments.length}})</view>
+    <view wx:if="{{comments.length === 0}}" class="empty">暂无评论</view>
+    <view class="comment-item" wx:for="{{comments}}" wx:key="id">
+      <view class="comment-header">
+        <text class="comment-user">{{item.user?.nickname || '用户'}}</text>
+        <text class="comment-time">{{item.timeText}}</text>
+      </view>
+      <view class="comment-content">{{item.content}}</view>
+    </view>
+  </view>
+
+  <!-- 阻塞弹窗 -->
+  <view class="modal-mask" wx:if="{{showBlockModal}}" bindtap="closeModal">
+    <view class="modal" catchtap="">
+      <view class="modal-title">标记阻塞</view>
+      <textarea class="modal-input" placeholder="请输入阻塞原因..." value="{{blockReason}}" bindinput="onBlockReasonInput" maxlength="500" />
+      <view class="modal-actions">
+        <button class="btn-action btn-outline" bindtap="closeModal">取消</button>
+        <button class="btn-action btn-danger" bindtap="handleBlock">确认阻塞</button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 关闭弹窗 -->
+  <view class="modal-mask" wx:if="{{showCloseModal}}" bindtap="closeModal">
+    <view class="modal" catchtap="">
+      <view class="modal-title">关闭任务</view>
+      <textarea class="modal-input" placeholder="请输入关闭证据..." value="{{closeEvidence}}" bindinput="onCloseEvidenceInput" maxlength="1000" />
+      <view class="modal-actions">
+        <button class="btn-action btn-outline" bindtap="closeModal">取消</button>
+        <button class="btn-action btn-primary" bindtap="handleClose">确认关闭</button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 复核退回弹窗 -->
+  <view class="modal-mask" wx:if="{{showReviewModal}}" bindtap="closeModal">
+    <view class="modal" catchtap="">
+      <view class="modal-title">复核退回</view>
+      <textarea class="modal-input" placeholder="请输入退回原因..." value="{{reviewComment}}" bindinput="onReviewCommentInput" maxlength="500" />
+      <view class="modal-actions">
+        <button class="btn-action btn-outline" bindtap="closeModal">取消</button>
+        <button class="btn-action btn-danger" bindtap="handleReviewFail">确认退回</button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 评论弹窗 -->
+  <view class="modal-mask" wx:if="{{showCommentModal}}" bindtap="closeModal">
+    <view class="modal" catchtap="">
+      <view class="modal-title">添加评论</view>
+      <textarea class="modal-input" placeholder="请输入评论内容..." value="{{commentContent}}" bindinput="onCommentInput" maxlength="1000" />
+      <view class="modal-actions">
+        <button class="btn-action btn-outline" bindtap="closeModal">取消</button>
+        <button class="btn-action btn-primary" bindtap="handleComment">发送</button>
+      </view>
+    </view>
+  </view>
+</view>
+
+<view wx:if="{{loading}}" class="loading-box" style="padding-top:200rpx">加载中...</view>

@@ -1,0 +1,40 @@
+# 服务配置
+server:
+  address: ":8080"
+  mode: "debug"
+
+# 数据库配置
+database:
+  type: "mysql"
+  host: "127.0.0.1"
+  port: 3306
+  user: "root"
+  password: "123456"
+  name: "teampanel"
+  charset: "utf8mb4"
+  maxIdleConns: 10
+  maxOpenConns: 100
+  connMaxLifetime: 3600
+
+# JWT配置
+jwt:
+  secret: "breakout-jwt-secret-2026"
+  expire: 86400  # 24小时
+
+# 微信配置
+wechat:
+  appid: "your-wechat-appid"
+  secret: "your-wechat-secret"
+
+# AI配置
+ai:
+  provider: "openai"  # openai / azure / qianwen
+  apiKey: "your-api-key"
+  endpoint: "https://api.openai.com/v1"
+  model: "gpt-3.5-turbo"
+
+# 文件上传配置
+upload:
+  path: "./uploads"
+  maxSize: 10485760  # 10MB
+  allowedTypes: ["jpg", "jpeg", "png", "gif", "pdf", "doc", "docx", "xls", "xlsx", "zip", "rar"]

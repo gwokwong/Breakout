@@ -1,0 +1,46 @@
+<!-- pages/profile/profile.wxml -->
+<view class="page">
+  <!-- 用户卡片 -->
+  <view class="user-card">
+  <view class="user-avatar">
+    <text class="avatar-text">{{userInfo.nickname ? userInfo.nickname[0] : '用'}}</text>
+  </view>
+    <view class="user-info">
+      <view class="user-name" bindtap="handleEditNickname">
+        {{userInfo.nickname || '用户'}}
+        <text class="edit-icon">✏️</text>
+      </view>
+      <view class="user-tags">
+        <view class="tag tag-primary">{{roleLabel}}</view>
+        <view class="tag tag-info" wx:if="{{teamInfo}}">{{teamInfo.name}}</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 统计 -->
+  <view class="stats-row">
+    <view class="stat-item">
+      <view class="stat-num color-primary">{{myTaskCount}}</view>
+      <view class="stat-label">进行中任务</view>
+    </view>
+    <view class="stat-item">
+      <view class="stat-num color-danger">{{unreadCount}}</view>
+      <view class="stat-label">未读通知</view>
+    </view>
+  </view>
+
+  <!-- 菜单 -->
+  <view class="menu-card">
+    <view class="menu-item" bindtap="handleEditNickname">
+      <text class="menu-icon">👤</text>
+      <text class="menu-text">修改昵称</text>
+      <text class="menu-arrow">›</text>
+    </view>
+  </view>
+
+  <!-- 退出登录 -->
+  <view class="logout-btn" bindtap="handleLogout">退出登录</view>
+
+  <!-- 版本 -->
+  <view class="version-text">破局 v1.0.0</view>
+</view>

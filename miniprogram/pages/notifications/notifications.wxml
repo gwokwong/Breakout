@@ -1,0 +1,47 @@
+<!-- pages/notifications/notifications.wxml -->
+<view class="page">
+  <!-- 筛选+操作 -->
+  <view class="filter-bar">
+    <view class="filter-tabs">
+      <view
+        class="filter-chip {{currentFilter === item.value ? 'active' : ''}}"
+        wx:for="{{filterTabs}}"
+        wx:key="value"
+        bindtap="onFilterChange"
+        data-value="{{item.value}}"
+      >{{item.label}}</view>
+    </view>
+    <view class="read-all" bindtap="handleReadAll">全部已读</view>
+  </view>
+
+  <!-- 通知列表 -->
+  <view class="noti-list">
+    <view wx:if="{{loading && notifications.length === 0}}" class="loading-box">加载中...</view>
+
+    <view wx:if="{{!loading && notifications.length === 0}}" class="empty">
+      <view class="empty-icon">🔔</view>
+      <view>暂无通知</view>
+    </view>
+
+    <view
+      class="noti-item {{item.is_read ? '' : 'unread'}}"
+      wx:for="{{notifications}}"
+      wx:key="id"
+      bindtap="handleTap"
+      data-id="{{item.id}}"
+      data-item="{{item}}"
+    >
+      <view class="noti-dot" wx:if="{{!item.is_read}}"></view>
+      <view class="noti-body">
+        <view class="noti-content">{{item.content}}</view>
+        <view class="noti-meta">
+          <view class="tag tag-primary">{{item.typeLabel}}</view>
+          <text class="noti-time">{{item.timeText}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view wx:if="{{hasMore && notifications.length > 0}}" class="loading-box">上拉加载更多</view>
+    <view wx:if="{{!hasMore && notifications.length > 0}}" class="loading-box">没有更多了</view>
+  </view>
+</view>

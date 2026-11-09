@@ -1,0 +1,1 @@
+import{at as t}from"./index-CKhlIYqs.js";function n(){return t.get("/team")}function a(e){return t.put("/team",e)}function m(e){return t.post("/team/invite",e)}function u(e){return t.delete(`/team/member/${e}`)}export{n as g,m as i,u as r,a as u};

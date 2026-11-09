@@ -1,0 +1,382 @@
+@use './variables.scss' as *;
+
+// ============================================
+// 全局重置
+// ============================================
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  background-color: $ad-bg-page;
+  color: $ad-text-primary;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+// ============================================
+// 滚动条
+// ============================================
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 3px;
+  &:hover {
+    background: rgba(0, 0, 0, 0.25);
+  }
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+// ============================================
+// Art Design Pro 通用组件样式
+// ============================================
+
+// 页面容器
+.page-container {
+  padding: 20px 24px;
+}
+
+// 卡片容器
+.ad-card {
+  background: $ad-bg-card;
+  border-radius: $ad-radius-lg;
+  padding: 24px;
+  box-shadow: $ad-shadow-sm;
+  border: 1px solid rgba(0, 0, 0, 0.02);
+  transition: box-shadow 0.3s ease;
+
+  &:hover {
+    box-shadow: $ad-shadow;
+  }
+}
+
+// 兼容旧 card-box 类
+.card-box {
+  @extend .ad-card;
+  margin-bottom: 16px;
+}
+
+// 页面标题
+.page-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: $ad-text-primary;
+  letter-spacing: -0.02em;
+}
+
+// 区块标题
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  color: $ad-text-primary;
+}
+
+// ============================================
+// 统计卡片 (Art Design Pro 风格)
+// ============================================
+.ad-stat-card {
+  background: $ad-bg-card;
+  border-radius: $ad-radius-lg;
+  padding: 24px;
+  box-shadow: $ad-shadow-sm;
+  border: 1px solid rgba(0, 0, 0, 0.02);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  transition: $ad-transition;
+  position: relative;
+  overflow: hidden;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: $ad-shadow-hover;
+  }
+
+  .ad-stat-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: $ad-radius;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .ad-stat-value {
+    font-size: 28px;
+    font-weight: 800;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+  }
+
+  .ad-stat-label {
+    font-size: 13px;
+    color: $ad-text-secondary;
+    margin-top: 2px;
+  }
+}
+
+// ============================================
+// 工具类
+// ============================================
+.flex-between {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.flex-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.flex-align {
+  display: flex;
+  align-items: center;
+}
+
+.mb-8 { margin-bottom: 8px; }
+.mb-16 { margin-bottom: 16px; }
+.mb-24 { margin-bottom: 24px; }
+.mt-8 { margin-top: 8px; }
+.mt-16 { margin-top: 16px; }
+.mt-24 { margin-top: 24px; }
+
+.text-muted {
+  color: $ad-text-secondary;
+  font-size: 13px;
+}
+
+.text-primary {
+  color: $ad-primary;
+}
+
+.text-danger {
+  color: $ad-danger;
+}
+
+.text-success {
+  color: $ad-success;
+}
+
+.text-warning {
+  color: $ad-warning;
+}
+
+// ============================================
+// Element Plus 组件覆盖 (Art Design Pro 风格)
+// ============================================
+
+// 覆盖 Element Plus 主色变量
+:root {
+  --el-color-primary: #4d7bfe;
+  --el-color-primary-light-3: #7ba0ff;
+  --el-color-primary-light-5: #a3bfff;
+  --el-color-primary-light-7: #c8d9ff;
+  --el-color-primary-light-8: #dae5ff;
+  --el-color-primary-light-9: #eef2ff;
+  --el-color-primary-dark-2: #3a5fe0;
+  --el-color-success: #31c49c;
+  --el-color-success-light-3: #62d4b4;
+  --el-color-success-light-5: #8ee0c9;
+  --el-color-success-light-7: #b9ecd9;
+  --el-color-success-light-8: #cef2e3;
+  --el-color-success-light-9: #e8f8f2;
+  --el-color-success-dark-2: #27a583;
+  --el-color-warning: #f0a020;
+  --el-color-warning-light-3: #f4b84f;
+  --el-color-warning-light-5: #f7c97f;
+  --el-color-warning-light-7: #fad9af;
+  --el-color-warning-light-8: #fbe2c7;
+  --el-color-warning-light-9: #fdf6ec;
+  --el-color-warning-dark-2: #c7861a;
+  --el-color-danger: #f25555;
+  --el-color-danger-light-3: #f57777;
+  --el-color-danger-light-5: #f89999;
+  --el-color-danger-light-7: #fbbbbb;
+  --el-color-danger-light-8: #fdcccc;
+  --el-color-danger-light-9: #fef0f0;
+  --el-color-danger-dark-2: #c24444;
+  --el-color-info: #86909c;
+  --el-color-info-light-3: #a1aab4;
+  --el-color-info-light-5: #b8c0c8;
+  --el-color-info-light-7: #cfd5db;
+  --el-color-info-light-8: #dde1e6;
+  --el-color-info-light-9: #f2f3f5;
+  --el-color-info-dark-2: #6e7780;
+  --el-border-radius-base: 6px;
+}
+
+// 按钮
+.el-button {
+  border-radius: $ad-radius-sm;
+  font-weight: 500;
+}
+
+.el-button--primary {
+  --el-button-bg-color: #{$ad-primary};
+  --el-button-border-color: #{$ad-primary};
+  --el-button-hover-bg-color: #{$ad-primary-light};
+  --el-button-hover-border-color: #{$ad-primary-light};
+  --el-button-active-bg-color: #{$ad-primary-dark};
+  --el-button-active-border-color: #{$ad-primary-dark};
+}
+
+// 卡片
+.el-card {
+  border-radius: $ad-radius-lg;
+  border: 1px solid rgba(0, 0, 0, 0.02);
+  box-shadow: $ad-shadow-sm;
+}
+
+// 输入框
+.el-input__wrapper {
+  border-radius: $ad-radius-sm;
+}
+
+.el-select .el-input__wrapper {
+  border-radius: $ad-radius-sm;
+}
+
+// 表格
+.el-table {
+  --el-table-border-color: #{$ad-border-light};
+  --el-table-header-bg-color: #{$ad-bg-page};
+  border-radius: $ad-radius;
+
+  th.el-table__cell {
+    font-weight: 600;
+    color: $ad-text-primary;
+  }
+}
+
+// 对话框
+.el-dialog {
+  border-radius: $ad-radius-lg;
+
+  .el-dialog__header {
+    padding: 20px 24px 12px;
+    margin-right: 0;
+
+    .el-dialog__title {
+      font-size: 16px;
+      font-weight: 600;
+    }
+  }
+
+  .el-dialog__body {
+    padding: 12px 24px;
+  }
+
+  .el-dialog__footer {
+    padding: 12px 24px 20px;
+  }
+}
+
+// 标签
+.el-tag {
+  border-radius: $ad-radius-sm;
+  font-weight: 500;
+}
+
+// 进度条
+.el-progress-bar__outer {
+  border-radius: 8px;
+}
+.el-progress-bar__inner {
+  border-radius: 8px;
+}
+
+// Tabs
+.el-tabs__item {
+  font-weight: 500;
+  font-size: 14px;
+}
+
+// 空状态
+.el-empty__description p {
+  color: $ad-text-secondary;
+}
+
+// ============================================
+// 甘特图样式
+// ============================================
+.gantt-container {
+  overflow-x: auto;
+
+  .gantt-row {
+    display: flex;
+    align-items: center;
+    height: 36px;
+    border-bottom: 1px solid $ad-border-light;
+
+    .gantt-label {
+      width: 220px;
+      flex-shrink: 0;
+      padding: 0 12px;
+      font-size: 13px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .gantt-bar-wrap {
+      flex: 1;
+      position: relative;
+      height: 100%;
+    }
+
+    .gantt-bar {
+      position: absolute;
+      top: 8px;
+      height: 20px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      padding: 0 8px;
+      font-size: 12px;
+      color: #fff;
+    }
+  }
+}
+
+// ============================================
+// 动画
+// ============================================
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in-up {
+  animation: fadeInUp 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+// 页面路由切换动画
+.page-transition-enter-active {
+  animation: fadeInUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.page-transition-leave-active {
+  transition: opacity 0.15s ease;
+  opacity: 0;
+}
