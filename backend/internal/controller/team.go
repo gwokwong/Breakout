@@ -141,6 +141,118 @@ func (c *teamController) Delete(r *ghttp.Request) {
 	// 开启事务
 	tx := service.DB.Begin()
 
+	// 删除团队关联数据
+	// 1. 删除周报
+	if err := tx.Where("team_id = ?", teamID).Delete(&model.WeeklyReport{}).Error; err != nil {
+		tx.Rollback()
+		r.Response.WriteJson(g.Map{
+			"code":    http.StatusInternalServerError,
+			"message": "删除周报失败",
+			"data":    nil,
+		})
+		return
+	}
+	// 2. 查出团队下所有项目ID
+	var projectIDs []uint64
+	tx.Model(&model.Project{}).Where("team_id = ?", teamID).Pluck("id", &projectIDs)
+	if len(projectIDs) > 0 {
+		// 删除项目成员
+		if err := tx.Where("project_id IN ?", projectIDs).Delete(&model.ProjectMember{}).Error; err != nil {
+			tx.Rollback()
+			r.Response.WriteJson(g.Map{
+				"code":    http.StatusInternalServerError,
+				"message": "删除项目成员失败",
+				"data":    nil,
+			})
+			return
+		}
+		// 项目下任务的附件、评论、通知、依赖关系
+		var taskIDs []uint64
+		tx.Model(&model.Task{}).Where("project_id IN ?", projectIDs).Pluck("id", &taskIDs)
+		if len(taskIDs) > 0 {
+			if err := tx.Where("task_id IN ?", taskIDs).Delete(&model.Attachment{}).Error; err != nil {
+				tx.Rollback()
+				r.Response.WriteJson(g.Map{"code": http.StatusInternalServerError, "message": "删除附件失败", "data": nil})
+				return
+			}
+			if err := tx.Where("task_id IN ?", taskIDs).Delete(&model.Comment{}).Error; err != nil {
+				tx.Rollback()
+				r.Response.WriteJson(g.Map{"code": http.StatusInternalServerError, "message": "删除评论失败", "data": nil})
+				return
+			}
+			if err := tx.Where("task_id IN ?", taskIDs).Delete(&model.Notification{}).Error; err != nil {
+				tx.Rollback()
+				r.Response.WriteJson(g.Map{"code": http.StatusInternalServerError, "message": "删除通知失败", "data": nil})
+				return
+			}
+			if err := tx.Where("predecessor_task_id IN ? OR successor_task_id IN ?", taskIDs, taskIDs).Delete(&model.TaskRelation{}).Error; err != nil {
+				tx.Rollback()
+				r.Response.WriteJson(g.Map{"code": http.StatusInternalServerError, "message": "删除任务依赖失败", "data": nil})
+				return
+			}
+			if err := tx.Where("task_id IN ?", taskIDs).Delete(&model.AiAction{}).Error; err != nil {
+				tx.Rollback()
+				r.Response.WriteJson(g.Map{"code": http.StatusInternalServerError, "message": "删除AI记录失败", "data": nil})
+				return
+			}
+		}
+		// 删除任务
+		if err := tx.Where("project_id IN ?", projectIDs).Delete(&model.Task{}).Error; err != nil {
+			tx.Rollback()
+			r.Response.WriteJson(g.Map{
+				"code":    http.StatusInternalServerError,
+				"message": "删除任务失败",
+				"data":    nil,
+			})
+			return
+		}
+		// 删除项目
+		if err := tx.Where("team_id = ?", teamID).Delete(&model.Project{}).Error; err != nil {
+			tx.Rollback()
+			r.Response.WriteJson(g.Map{
+				"code":    http.StatusInternalServerError,
+				"message": "删除项目失败",
+				"data":    nil,
+			})
+			return
+		}
+	}
+	// 4. 删除无项目归属但属于该团队的任务及关联数据
+	var orphanTaskIDs []uint64
+	tx.Model(&model.Task{}).Where("team_id = ?", teamID).Pluck("id", &orphanTaskIDs)
+	if len(orphanTaskIDs) > 0 {
+		if err := tx.Where("task_id IN ?", orphanTaskIDs).Delete(&model.Attachment{}).Error; err != nil {
+			tx.Rollback()
+			r.Response.WriteJson(g.Map{"code": http.StatusInternalServerError, "message": "删除附件失败", "data": nil})
+			return
+		}
+		if err := tx.Where("task_id IN ?", orphanTaskIDs).Delete(&model.Comment{}).Error; err != nil {
+			tx.Rollback()
+			r.Response.WriteJson(g.Map{"code": http.StatusInternalServerError, "message": "删除评论失败", "data": nil})
+			return
+		}
+		if err := tx.Where("task_id IN ?", orphanTaskIDs).Delete(&model.Notification{}).Error; err != nil {
+			tx.Rollback()
+			r.Response.WriteJson(g.Map{"code": http.StatusInternalServerError, "message": "删除通知失败", "data": nil})
+			return
+		}
+		if err := tx.Where("predecessor_task_id IN ? OR successor_task_id IN ?", orphanTaskIDs, orphanTaskIDs).Delete(&model.TaskRelation{}).Error; err != nil {
+			tx.Rollback()
+			r.Response.WriteJson(g.Map{"code": http.StatusInternalServerError, "message": "删除任务依赖失败", "data": nil})
+			return
+		}
+		if err := tx.Where("task_id IN ?", orphanTaskIDs).Delete(&model.AiAction{}).Error; err != nil {
+			tx.Rollback()
+			r.Response.WriteJson(g.Map{"code": http.StatusInternalServerError, "message": "删除AI记录失败", "data": nil})
+			return
+		}
+		if err := tx.Where("team_id = ?", teamID).Delete(&model.Task{}).Error; err != nil {
+			tx.Rollback()
+			r.Response.WriteJson(g.Map{"code": http.StatusInternalServerError, "message": "删除任务失败", "data": nil})
+			return
+		}
+	}
+
 	// 删除团队
 	if err := tx.Delete(&model.Team{}, teamID).Error; err != nil {
 		tx.Rollback()
@@ -213,6 +325,16 @@ func (c *teamController) InviteMember(r *ghttp.Request) {
 		r.Response.WriteJson(g.Map{
 			"code":    http.StatusBadRequest,
 			"message": "用户已经在团队中",
+			"data":    nil,
+		})
+		return
+	}
+
+	// 用户已在其他团队，不能直接邀请
+	if user.TeamID != 0 {
+		r.Response.WriteJson(g.Map{
+			"code":    http.StatusBadRequest,
+			"message": "用户已在其他团队中，无法邀请",
 			"data":    nil,
 		})
 		return

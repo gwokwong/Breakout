@@ -16,11 +16,24 @@ var Comment = &commentController{}
 
 type commentController struct{}
 
+// checkTaskTeam 校验任务属于当前团队
+func checkTaskTeam(r *ghttp.Request, taskID uint64) bool {
+	teamID := r.GetCtxVar("team_id").Uint64()
+	var count int64
+	service.DB.Model(&model.Task{}).Where("id = ? AND team_id = ?", taskID, teamID).Count(&count)
+	return count > 0
+}
+
 // List 获取评论列表
 func (c *commentController) List(r *ghttp.Request) {
 	taskID := r.Get("task_id").Uint64()
 	if taskID == 0 {
 		r.Response.WriteJson(g.Map{"code": http.StatusBadRequest, "message": "任务ID不能为空", "data": nil})
+		return
+	}
+
+	if !checkTaskTeam(r, taskID) {
+		r.Response.WriteJson(g.Map{"code": http.StatusForbidden, "message": "无权访问该任务", "data": nil})
 		return
 	}
 
@@ -84,6 +97,20 @@ func (c *commentController) Post(r *ghttp.Request) {
 		return
 	}
 
+	if !checkTaskTeam(r, taskID) {
+		r.Response.WriteJson(g.Map{"code": http.StatusForbidden, "message": "无权访问该任务", "data": nil})
+		return
+	}
+
+	// 校验父评论：如果指定了 ParentID，必须属于同一任务
+	if req.ParentID != 0 {
+		var parent model.Comment
+		if err := service.DB.Where("id = ? AND task_id = ?", req.ParentID, taskID).First(&parent).Error; err != nil {
+			r.Response.WriteJson(g.Map{"code": http.StatusBadRequest, "message": "父评论不存在或不属于该任务", "data": nil})
+			return
+		}
+	}
+
 	comment := model.Comment{
 		TaskID:   taskID,
 		UserID:   userID,
@@ -97,6 +124,18 @@ func (c *commentController) Post(r *ghttp.Request) {
 	}
 
 	service.DB.Preload("User").First(&comment, comment.ID)
+
+	// 通知任务负责人和创建者有新评论（type=9 任务评论）
+	var task model.Task
+	if err := service.DB.Where("id = ?", taskID).First(&task).Error; err == nil {
+		if task.AssigneeID > 0 && task.AssigneeID != userID {
+			notifyTaskEvent(task.AssigneeID, taskID, 9, "任务「"+task.Title+"」有新评论")
+		}
+		if task.CreatorID > 0 && task.CreatorID != userID && task.CreatorID != task.AssigneeID {
+			notifyTaskEvent(task.CreatorID, taskID, 9, "任务「"+task.Title+"」有新评论")
+		}
+	}
+
 	r.Response.WriteJson(g.Map{"code": http.StatusOK, "message": "创建成功", "data": comment})
 }
 
@@ -115,6 +154,11 @@ func (c *commentController) Delete(r *ghttp.Request) {
 	var comment model.Comment
 	if err := service.DB.Where("id = ?", commentID).First(&comment).Error; err != nil {
 		r.Response.WriteJson(g.Map{"code": http.StatusNotFound, "message": "评论不存在", "data": nil})
+		return
+	}
+
+	if !checkTaskTeam(r, comment.TaskID) {
+		r.Response.WriteJson(g.Map{"code": http.StatusForbidden, "message": "无权访问该任务", "data": nil})
 		return
 	}
 
@@ -147,6 +191,17 @@ func (c *commentController) GetReplies(r *ghttp.Request) {
 	commentID, err := strconv.ParseUint(commentIDStr, 10, 64)
 	if err != nil {
 		r.Response.WriteJson(g.Map{"code": http.StatusBadRequest, "message": "无效的评论ID", "data": nil})
+		return
+	}
+
+	// 校验父评论所属任务属于当前团队
+	var parent model.Comment
+	if err := service.DB.Where("id = ?", commentID).First(&parent).Error; err != nil {
+		r.Response.WriteJson(g.Map{"code": http.StatusNotFound, "message": "评论不存在", "data": nil})
+		return
+	}
+	if !checkTaskTeam(r, parent.TaskID) {
+		r.Response.WriteJson(g.Map{"code": http.StatusForbidden, "message": "无权访问该任务", "data": nil})
 		return
 	}
 
@@ -183,6 +238,11 @@ func (c *commentController) CreateReply(r *ghttp.Request) {
 	var parent model.Comment
 	if err := service.DB.Where("id = ?", commentID).First(&parent).Error; err != nil {
 		r.Response.WriteJson(g.Map{"code": http.StatusNotFound, "message": "评论不存在", "data": nil})
+		return
+	}
+
+	if !checkTaskTeam(r, parent.TaskID) {
+		r.Response.WriteJson(g.Map{"code": http.StatusForbidden, "message": "无权访问该任务", "data": nil})
 		return
 	}
 

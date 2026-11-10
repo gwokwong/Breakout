@@ -19,6 +19,7 @@ type reportController struct{}
 // GetWeeklyList 获取周报列表
 func (c *reportController) GetWeeklyList(r *ghttp.Request) {
 	userID := r.GetCtxVar("user_id").Uint64()
+	teamID := r.GetCtxVar("team_id").Uint64()
 
 	page := r.Get("page", 1).Int()
 	pageSize := r.Get("page_size", 20).Int()
@@ -28,10 +29,10 @@ func (c *reportController) GetWeeklyList(r *ghttp.Request) {
 	offset := (page - 1) * pageSize
 
 	var total int64
-	service.DB.Model(&model.WeeklyReport{}).Where("generated_by = ?", userID).Count(&total)
+	service.DB.Model(&model.WeeklyReport{}).Where("generated_by = ? AND team_id = ?", userID, teamID).Count(&total)
 
 	var reports []model.WeeklyReport
-	if err := service.DB.Where("generated_by = ?", userID).
+	if err := service.DB.Where("generated_by = ? AND team_id = ?", userID, teamID).
 		Order("created_at DESC").
 		Offset(offset).Limit(pageSize).
 		Find(&reports).Error; err != nil {
@@ -66,12 +67,19 @@ func (c *reportController) GetWeeklyReport(r *ghttp.Request) {
 		return
 	}
 
+	teamID := r.GetCtxVar("team_id").Uint64()
+	if report.TeamID != teamID {
+		r.Response.WriteJson(g.Map{"code": http.StatusForbidden, "message": "无权访问该周报", "data": nil})
+		return
+	}
+
 	r.Response.WriteJson(g.Map{"code": http.StatusOK, "message": "success", "data": report})
 }
 
 // GenerateWeeklyReport 生成周报
 func (c *reportController) GenerateWeeklyReport(r *ghttp.Request) {
 	userID := r.GetCtxVar("user_id").Uint64()
+	teamID := r.GetCtxVar("team_id").Uint64()
 
 	var req model.GenerateWeeklyReportReq
 	if err := r.Parse(&req); err != nil {
@@ -79,9 +87,15 @@ func (c *reportController) GenerateWeeklyReport(r *ghttp.Request) {
 		return
 	}
 
-	// 查询该用户在时间范围内的任务
+	// 校验项目归属当前团队
+	if req.ProjectID != 0 && !checkProjectTeam(r, req.ProjectID) {
+		r.Response.WriteJson(g.Map{"code": http.StatusForbidden, "message": "无权访问该项目", "data": nil})
+		return
+	}
+
+	// 查询该用户在时间范围内的任务（限定团队）
 	var tasks []model.Task
-	service.DB.Where("assignee_id = ? AND updated_at BETWEEN ? AND ?", userID, req.StartDate+" 00:00:00", req.EndDate+" 23:59:59").
+	service.DB.Where("assignee_id = ? AND team_id = ? AND updated_at BETWEEN ? AND ?", userID, teamID, req.StartDate+" 00:00:00", req.EndDate+" 23:59:59").
 		Find(&tasks)
 
 	// 统计：1-待办 2-进行中 3-待复核 4-待验收 5-已完成 6-已关闭
@@ -114,7 +128,7 @@ func (c *reportController) GenerateWeeklyReport(r *ghttp.Request) {
 	content += "- 阻塞: " + strconv.Itoa(blockedCount) + "\n"
 
 	report := model.WeeklyReport{
-		TeamID:     req.TeamID,
+		TeamID:     teamID,
 		ProjectID:  req.ProjectID,
 		StartDate:  req.StartDate,
 		EndDate:    req.EndDate,
@@ -144,6 +158,11 @@ func (c *reportController) GetStatistics(r *ghttp.Request) {
 	projectID := r.Get("project_id").Uint64()
 	if projectID == 0 {
 		r.Response.WriteJson(g.Map{"code": http.StatusBadRequest, "message": "项目ID不能为空", "data": nil})
+		return
+	}
+
+	if !checkProjectTeam(r, projectID) {
+		r.Response.WriteJson(g.Map{"code": http.StatusForbidden, "message": "无权访问该项目", "data": nil})
 		return
 	}
 
@@ -213,6 +232,11 @@ func (c *reportController) GetGanttChart(r *ghttp.Request) {
 	projectID := r.Get("project_id").Uint64()
 	if projectID == 0 {
 		r.Response.WriteJson(g.Map{"code": http.StatusBadRequest, "message": "项目ID不能为空", "data": nil})
+		return
+	}
+
+	if !checkProjectTeam(r, projectID) {
+		r.Response.WriteJson(g.Map{"code": http.StatusForbidden, "message": "无权访问该项目", "data": nil})
 		return
 	}
 

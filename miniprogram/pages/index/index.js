@@ -41,19 +41,21 @@ Page({
     if (!app.globalData.token) return
     try {
       const userId = app.globalData.userInfo?.id
-      const teamId = app.globalData.userInfo?.team_id
 
-      // 并行加载
-      const [myTasksRes, blockedRes, projectsRes, unreadRes] = await Promise.all([
+      // 并行加载（任一接口失败不影响其他数据展示）
+      const results = await Promise.allSettled([
         get('/task', { assignee_id: userId, page: 1, page_size: 100 }),
         get('/task/blocked', { page: 1, page_size: 5 }),
         get('/project'),
         get('/notification/unread-count')
       ])
+      const [myTasksR, blockedR, projectsR, unreadR] = results
 
-      const myTasks = myTasksRes.data?.list || myTasksRes.data || []
-      const blocked = blockedRes.data?.list || blockedRes.data || []
-      const projects = projectsRes.data?.list || projectsRes.data || []
+      const myTasks = myTasksR.status === 'fulfilled' ? (myTasksR.value.data?.list || myTasksR.value.data || []) : []
+      const blocked = blockedR.status === 'fulfilled' ? (blockedR.value.data?.list || blockedR.value.data || []) : []
+      const projects = projectsR.status === 'fulfilled' ? (projectsR.value.data?.list || projectsR.value.data || []) : []
+      const unreadCount = unreadR.status === 'fulfilled' ? (unreadR.value.data?.count || 0) : 0
+      const blockedCount = blockedR.status === 'fulfilled' ? (blockedR.value.data?.total || blocked.length) : 0
 
       // 统计我的任务
       const stats = { todo: 0, inProgress: 0, review: 0, done: 0 }
@@ -90,10 +92,10 @@ Page({
       this.setData({
         myStats: stats,
         blockedTasks: blocked.map(processTask),
-        blockedCount: blockedRes.data?.total || blocked.length,
+        blockedCount,
         projects: projects.slice(0, 3),
         recentTasks: recent,
-        unreadCount: unreadRes.data?.count || 0,
+        unreadCount,
         loading: false
       })
     } catch (err) {

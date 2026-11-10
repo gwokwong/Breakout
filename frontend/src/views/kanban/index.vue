@@ -69,7 +69,7 @@ import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { getTasks, updateTaskStatus } from '@/api/task'
 import { getProjects } from '@/api/project'
-import { TASK_STATUS_MAP, PRIORITY_MAP } from '@/constants'
+import { TASK_STATUS_MAP, PRIORITY_MAP, canTransition } from '@/constants'
 import { formatDate, isOverdue } from '@/utils'
 import TaskDetailDialog from '@/components/TaskDetailDialog.vue'
 
@@ -101,6 +101,12 @@ async function handleDrop(event, newStatus) {
   const task = dragTask.value
   if (!task || task.status === newStatus) return
   const oldStatus = task.status
+  // 前端状态流转校验，与后端规则一致
+  if (!canTransition(oldStatus, newStatus, task.reviewer_id || 0)) {
+    ElMessage.warning(`不允许从「${TASK_STATUS_MAP[oldStatus]?.label}」移动到「${TASK_STATUS_MAP[newStatus]?.label}」`)
+    dragTask.value = null
+    return
+  }
   try {
     // 乐观更新
     task.status = newStatus

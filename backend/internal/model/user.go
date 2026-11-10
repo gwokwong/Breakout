@@ -8,7 +8,7 @@ type User struct {
 	TeamID    uint64    `json:"team_id" gorm:"default:0"`
 	Nickname  string    `json:"nickname" gorm:"size:50;not null"`
 	Avatar    string    `json:"avatar" gorm:"size:255"`
-	Phone     string    `json:"phone" gorm:"size:20;uniqueIndex"`
+	Phone     *string   `json:"phone,omitempty" gorm:"size:20;uniqueIndex"`
 	Email     string    `json:"email" gorm:"size:100"`
 	Password  string    `json:"-" gorm:"size:255;not null"`
 	Role      int       `json:"role" gorm:"default:3"` // 1-所有者 2-管理员 3-成员 4-访客
@@ -45,4 +45,11 @@ type UserInfoResp struct {
 	Phone    string `json:"phone"`
 	Role     int    `json:"role"`
 	Token    string `json:"token,omitempty"`
+}
+
+// UpdateProfileReq 更新用户信息请求（白名单）
+type UpdateProfileReq struct {
+	Nickname string `json:"nickname"`
+	Avatar   string `json:"avatar"`
+	Email    string `json:"email"`
 }

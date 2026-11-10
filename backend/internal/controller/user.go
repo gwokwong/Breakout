@@ -5,10 +5,12 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/gogf/gf/v2/frame/g"
 	"github.com/gogf/gf/v2/net/ghttp"
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 
 	"breakout.cn/backend/internal/model"
 	"breakout.cn/backend/internal/service"
@@ -18,6 +20,14 @@ import (
 var User = &userController{}
 
 type userController struct{}
+
+// phoneStr 安全获取手机号字符串
+func phoneStr(p *string) string {
+	if p == nil {
+		return ""
+	}
+	return *p
+}
 
 // Login 用户登录
 func (c *userController) Login(r *ghttp.Request) {
@@ -80,7 +90,7 @@ func (c *userController) Login(r *ghttp.Request) {
 			TeamID:   user.TeamID,
 			Nickname: user.Nickname,
 			Avatar:   user.Avatar,
-			Phone:    user.Phone,
+			Phone:    phoneStr(user.Phone),
 			Role:     user.Role,
 			Token:    token,
 		},
@@ -122,16 +132,30 @@ func (c *userController) Register(r *ghttp.Request) {
 		return
 	}
 
-	// 创建用户
+	// 创建用户和团队（事务保证一致性）
 	user := model.User{
-		Phone:    req.Phone,
+		Phone:    &req.Phone,
 		Password: string(hashedPassword),
 		Nickname: req.Nickname,
 		Role:     1, // 默认创建者为所有者角色
 		Status:   1,
 	}
 
-	if err := service.DB.Create(&user).Error; err != nil {
+	err = service.DB.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(&user).Error; err != nil {
+			return err
+		}
+		team := model.Team{
+			Name:    req.Nickname + "的团队",
+			OwnerID: user.ID,
+		}
+		if err := tx.Create(&team).Error; err != nil {
+			return err
+		}
+		user.TeamID = team.ID
+		return tx.Save(&user).Error
+	})
+	if err != nil {
 		r.Response.WriteJson(g.Map{
 			"code":    http.StatusInternalServerError,
 			"message": "注册失败",
@@ -139,24 +163,6 @@ func (c *userController) Register(r *ghttp.Request) {
 		})
 		return
 	}
-
-	// 创建默认团队
-	team := model.Team{
-		Name:    req.Nickname + "的团队",
-		OwnerID: user.ID,
-	}
-	if err := service.DB.Create(&team).Error; err != nil {
-		r.Response.WriteJson(g.Map{
-			"code":    http.StatusInternalServerError,
-			"message": "创建团队失败",
-			"data":    nil,
-		})
-		return
-	}
-
-	// 更新用户团队ID
-	user.TeamID = team.ID
-	service.DB.Save(&user)
 
 	// 生成令牌
 	token, err := service.GenerateToken(user.ID, user.TeamID, user.Role)
@@ -177,7 +183,7 @@ func (c *userController) Register(r *ghttp.Request) {
 			TeamID:   user.TeamID,
 			Nickname: user.Nickname,
 			Avatar:   user.Avatar,
-			Phone:    user.Phone,
+			Phone:    phoneStr(user.Phone),
 			Role:     user.Role,
 			Token:    token,
 		},
@@ -205,7 +211,8 @@ func (c *userController) WxLogin(r *ghttp.Request) {
 		appid, secret, req.Code,
 	)
 
-	resp, err := http.Get(code2sessionURL)
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Get(code2sessionURL)
 	if err != nil {
 		r.Response.WriteJson(g.Map{
 			"code":    http.StatusInternalServerError,
@@ -253,7 +260,7 @@ func (c *userController) WxLogin(r *ghttp.Request) {
 	// 根据 openid 查找或创建用户
 	var user model.User
 	if err := service.DB.Where("wx_openid = ?", wxResult.Openid).First(&user).Error; err != nil {
-		// 新用户：创建默认用户和团队
+		// 新用户：事务创建默认用户和团队
 		nickname := "微信用户"
 		user = model.User{
 			Nickname: nickname,
@@ -262,7 +269,20 @@ func (c *userController) WxLogin(r *ghttp.Request) {
 		}
 		user.WxOpenid = &wxResult.Openid
 
-		if err := service.DB.Create(&user).Error; err != nil {
+		if err := service.DB.Transaction(func(tx *gorm.DB) error {
+			if err := tx.Create(&user).Error; err != nil {
+				return err
+			}
+			team := model.Team{
+				Name:    nickname + "的团队",
+				OwnerID: user.ID,
+			}
+			if err := tx.Create(&team).Error; err != nil {
+				return err
+			}
+			user.TeamID = team.ID
+			return tx.Save(&user).Error
+		}); err != nil {
 			r.Response.WriteJson(g.Map{
 				"code":    http.StatusInternalServerError,
 				"message": "创建用户失败",
@@ -270,23 +290,6 @@ func (c *userController) WxLogin(r *ghttp.Request) {
 			})
 			return
 		}
-
-		// 创建默认团队
-		team := model.Team{
-			Name:    nickname + "的团队",
-			OwnerID: user.ID,
-		}
-		if err := service.DB.Create(&team).Error; err != nil {
-			r.Response.WriteJson(g.Map{
-				"code":    http.StatusInternalServerError,
-				"message": "创建团队失败",
-				"data":    nil,
-			})
-			return
-		}
-
-		user.TeamID = team.ID
-		service.DB.Save(&user)
 	}
 
 	// 检查用户状态
@@ -318,7 +321,7 @@ func (c *userController) WxLogin(r *ghttp.Request) {
 			TeamID:   user.TeamID,
 			Nickname: user.Nickname,
 			Avatar:   user.Avatar,
-			Phone:    user.Phone,
+			Phone:    phoneStr(user.Phone),
 			Role:     user.Role,
 			Token:    token,
 		},
@@ -347,7 +350,7 @@ func (c *userController) Info(r *ghttp.Request) {
 			TeamID:   user.TeamID,
 			Nickname: user.Nickname,
 			Avatar:   user.Avatar,
-			Phone:    user.Phone,
+			Phone:    phoneStr(user.Phone),
 			Role:     user.Role,
 		},
 	})
@@ -357,8 +360,8 @@ func (c *userController) Info(r *ghttp.Request) {
 func (c *userController) UpdateProfile(r *ghttp.Request) {
 	userID := r.GetCtxVar("user_id").Uint64()
 
-	var data map[string]interface{}
-	if err := r.Parse(&data); err != nil {
+	var req model.UpdateProfileReq
+	if err := r.Parse(&req); err != nil {
 		r.Response.WriteJson(g.Map{
 			"code":    http.StatusBadRequest,
 			"message": err.Error(),
@@ -367,16 +370,28 @@ func (c *userController) UpdateProfile(r *ghttp.Request) {
 		return
 	}
 
-	// 不允许修改的字段
-	delete(data, "id")
-	delete(data, "phone")
-	delete(data, "password")
-	delete(data, "role")
-	delete(data, "status")
-	delete(data, "team_id")
-	delete(data, "wx_openid")
+	// 白名单方式：只允许更新 nickname/avatar/email
+	updates := map[string]interface{}{}
+	if req.Nickname != "" {
+		updates["nickname"] = req.Nickname
+	}
+	if req.Avatar != "" {
+		updates["avatar"] = req.Avatar
+	}
+	if req.Email != "" {
+		updates["email"] = req.Email
+	}
 
-	if err := service.DB.Model(&model.User{}).Where("id = ?", userID).Updates(data).Error; err != nil {
+	if len(updates) == 0 {
+		r.Response.WriteJson(g.Map{
+			"code":    http.StatusBadRequest,
+			"message": "没有可更新的字段",
+			"data":    nil,
+		})
+		return
+	}
+
+	if err := service.DB.Model(&model.User{}).Where("id = ?", userID).Updates(updates).Error; err != nil {
 		r.Response.WriteJson(g.Map{
 			"code":    http.StatusInternalServerError,
 			"message": "更新失败",

@@ -16,6 +16,14 @@ var Project = &projectController{}
 
 type projectController struct{}
 
+// checkProjectTeam 校验项目属于当前团队
+func checkProjectTeam(r *ghttp.Request, projectID uint64) bool {
+	teamID := r.GetCtxVar("team_id").Uint64()
+	var count int64
+	service.DB.Model(&model.Project{}).Where("id = ? AND team_id = ?", projectID, teamID).Count(&count)
+	return count > 0
+}
+
 // List 获取项目列表
 func (c *projectController) List(r *ghttp.Request) {
 	userID := r.GetCtxVar("user_id").Uint64()
@@ -24,11 +32,11 @@ func (c *projectController) List(r *ghttp.Request) {
 	var projects []model.Project
 	query := service.DB.Where("team_id = ?", teamID)
 
-	// 普通成员只能查看自己参与的项目
+	// 普通成员(3)和访客(4)只能查看自己参与的项目
 	userRole := r.GetCtxVar("user_role").Int()
-	if userRole == 3 {
-		query.Joins("JOIN project_members ON projects.id = project_members.project_id").
-			Where("project_members.user_id = ?", userID)
+	if userRole >= 3 {
+		query = query.Joins("JOIN project_member ON project.id = project_member.project_id").
+			Where("project_member.user_id = ?", userID)
 	}
 
 	if err := query.Preload("Owner").Preload("Members").Find(&projects).Error; err != nil {
@@ -55,6 +63,15 @@ func (c *projectController) Get(r *ghttp.Request) {
 		r.Response.WriteJson(g.Map{
 			"code":    http.StatusBadRequest,
 			"message": "无效的项目ID",
+			"data":    nil,
+		})
+		return
+	}
+
+	if !checkProjectTeam(r, projectID) {
+		r.Response.WriteJson(g.Map{
+			"code":    http.StatusForbidden,
+			"message": "无权访问该项目",
 			"data":    nil,
 		})
 		return
@@ -175,6 +192,15 @@ func (c *projectController) Put(r *ghttp.Request) {
 	userRole := r.GetCtxVar("user_role").Int()
 	userID := r.GetCtxVar("user_id").Uint64()
 
+	if !checkProjectTeam(r, projectID) {
+		r.Response.WriteJson(g.Map{
+			"code":    http.StatusForbidden,
+			"message": "无权访问该项目",
+			"data":    nil,
+		})
+		return
+	}
+
 	// 检查权限：团队所有者、管理员 或 项目管理员
 	var project model.Project
 	if err := service.DB.Where("id = ?", projectID).First(&project).Error; err != nil {
@@ -263,6 +289,15 @@ func (c *projectController) Delete(r *ghttp.Request) {
 
 	userRole := r.GetCtxVar("user_role").Int()
 
+	if !checkProjectTeam(r, projectID) {
+		r.Response.WriteJson(g.Map{
+			"code":    http.StatusForbidden,
+			"message": "无权访问该项目",
+			"data":    nil,
+		})
+		return
+	}
+
 	// 只有团队所有者和管理员可以删除项目
 	if userRole != 1 && userRole != 2 {
 		r.Response.WriteJson(g.Map{
@@ -331,6 +366,15 @@ func (c *projectController) GetMembers(r *ghttp.Request) {
 		return
 	}
 
+	if !checkProjectTeam(r, projectID) {
+		r.Response.WriteJson(g.Map{
+			"code":    http.StatusForbidden,
+			"message": "无权访问该项目",
+			"data":    nil,
+		})
+		return
+	}
+
 	var members []model.ProjectMember
 	if err := service.DB.Preload("User").
 		Where("project_id = ?", projectID).
@@ -366,6 +410,16 @@ func (c *projectController) AddMember(r *ghttp.Request) {
 
 	userRole := r.GetCtxVar("user_role").Int()
 	userID := r.GetCtxVar("user_id").Uint64()
+	teamID := r.GetCtxVar("team_id").Uint64()
+
+	if !checkProjectTeam(r, projectID) {
+		r.Response.WriteJson(g.Map{
+			"code":    http.StatusForbidden,
+			"message": "无权访问该项目",
+			"data":    nil,
+		})
+		return
+	}
 
 	// 检查权限：团队所有者、管理员 或 项目管理员
 	canAdd := userRole == 1 || userRole == 2
@@ -395,12 +449,12 @@ func (c *projectController) AddMember(r *ghttp.Request) {
 		return
 	}
 
-	// 检查用户是否存在
+	// 检查用户是否存在且属于同一团队
 	var user model.User
-	if err := service.DB.Where("id = ?", req.UserID).First(&user).Error; err != nil {
+	if err := service.DB.Where("id = ? AND team_id = ?", req.UserID, teamID).First(&user).Error; err != nil {
 		r.Response.WriteJson(g.Map{
 			"code":    http.StatusBadRequest,
-			"message": "用户不存在",
+			"message": "用户不存在或不在当前团队",
 			"data":    nil,
 		})
 		return
@@ -461,6 +515,15 @@ func (c *projectController) RemoveMember(r *ghttp.Request) {
 		r.Response.WriteJson(g.Map{
 			"code":    http.StatusBadRequest,
 			"message": "无效的用户ID",
+			"data":    nil,
+		})
+		return
+	}
+
+	if !checkProjectTeam(r, projectID) {
+		r.Response.WriteJson(g.Map{
+			"code":    http.StatusForbidden,
+			"message": "无权访问该项目",
 			"data":    nil,
 		})
 		return

@@ -106,7 +106,7 @@
       <div class="action-bar">
         <el-button v-if="task.status === 1" type="primary" size="small" @click="changeStatus(2)">开始任务</el-button>
         <el-button v-if="task.status === 2" type="warning" size="small" @click="changeStatus(3)">提交复核</el-button>
-        <el-button v-if="task.status === 2" type="success" size="small" @click="changeStatus(4)">提交验收</el-button>
+        <el-button v-if="task.status === 2 && !task.reviewer_id" type="success" size="small" @click="changeStatus(4)">提交验收</el-button>
         <!-- 复核操作 -->
         <el-button v-if="task.status === 3" type="success" size="small" @click="handleReview(true)">复核通过</el-button>
         <el-button v-if="task.status === 3" type="danger" size="small" @click="handleReview(false)">复核不通过</el-button>
@@ -503,7 +503,7 @@ async function handleAiCommand(cmd) {
     const candidates = res.data?.candidates || res.data || []
     const list = Array.isArray(candidates) ? candidates : [candidates]
     if (list.length) {
-      const names = list.map((c) => `${c.nickname || c.name}（待办${c.pending_count || c.pending || 0}个）`).join('、')
+      const names = list.map((c) => `${c.nickname || c.name}（待办${c.task_count || 0}个）`).join('、')
       ElMessageBox.confirm(`AI推荐负责人：${names}`, 'AI推荐', {
         confirmButtonText: '分配第一个',
         cancelButtonText: '取消',

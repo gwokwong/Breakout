@@ -35,6 +35,8 @@ Page({
     closeEvidence: '',
     showReviewModal: false,
     reviewComment: '',
+    showAcceptModal: false,
+    acceptComment: '',
     showCommentModal: false,
     commentContent: '',
     // 评论
@@ -134,10 +136,22 @@ Page({
 
   // 复核通过（3→4）
   async handleReviewPass() {
+    const { confirm } = await new Promise((resolve) => {
+      wx.showModal({
+        title: '确认复核通过',
+        content: '复核通过后任务将进入待验收状态，确定吗？',
+        success: resolve
+      })
+    })
+    if (!confirm) return
     await post('/task/' + this.data.taskId + '/review', { pass: true, comment: '' })
     wx.showToast({ title: '复核通过', icon: 'success' })
-    this.setData({ showReviewModal: false })
     this.loadTask()
+  },
+
+  // 打开复核退回弹窗
+  showReviewFail() {
+    this.setData({ showReviewModal: true, reviewComment: '' })
   },
 
   // 复核不通过（3→2）
@@ -155,15 +169,34 @@ Page({
 
   // 验收通过（4→5）
   async handleAcceptPass() {
+    const { confirm } = await new Promise((resolve) => {
+      wx.showModal({
+        title: '确认验收通过',
+        content: '验收通过后任务将标记为已完成，确定吗？',
+        success: resolve
+      })
+    })
+    if (!confirm) return
     await post('/task/' + this.data.taskId + '/accept', { pass: true, comment: '' })
     wx.showToast({ title: '验收通过', icon: 'success' })
     this.loadTask()
   },
 
+  // 打开验收退回弹窗
+  showAcceptFail() {
+    this.setData({ showAcceptModal: true, acceptComment: '' })
+  },
+
   // 验收不通过（4→2）
   async handleAcceptFail() {
-    await post('/task/' + this.data.taskId + '/accept', { pass: false, comment: '验收不通过' })
+    const comment = this.data.acceptComment
+    if (!comment) {
+      wx.showToast({ title: '请填写退回原因', icon: 'none' })
+      return
+    }
+    await post('/task/' + this.data.taskId + '/accept', { pass: false, comment })
     wx.showToast({ title: '已退回', icon: 'success' })
+    this.setData({ showAcceptModal: false, acceptComment: '' })
     this.loadTask()
   },
 
@@ -226,6 +259,7 @@ Page({
   onBlockReasonInput(e) { this.setData({ blockReason: e.detail.value }) },
   onCloseEvidenceInput(e) { this.setData({ closeEvidence: e.detail.value }) },
   onReviewCommentInput(e) { this.setData({ reviewComment: e.detail.value }) },
+  onAcceptCommentInput(e) { this.setData({ acceptComment: e.detail.value }) },
   onCommentInput(e) { this.setData({ commentContent: e.detail.value }) },
 
   closeModal() {
@@ -233,6 +267,7 @@ Page({
       showBlockModal: false,
       showCloseModal: false,
       showReviewModal: false,
+      showAcceptModal: false,
       showCommentModal: false
     })
   }

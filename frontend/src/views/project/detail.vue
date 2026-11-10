@@ -89,7 +89,7 @@
             <el-icon><UserFilled /></el-icon>&nbsp;成员
           </el-radio-button>
         </el-radio-group>
-        <el-button type="primary" @click="showCreateTask = true">
+        <el-button type="primary" @click="openCreateTask">
           <el-icon><Plus /></el-icon>&nbsp;新建任务
         </el-button>
       </div>
@@ -320,11 +320,6 @@
               <el-date-picker v-model="taskForm.start_date" type="date" value-format="YYYY-MM-DD" style="width: 100%" />
             </el-form-item>
           </el-col>
-          <el-col :span="12">
-            <el-form-item label="结束日期">
-              <el-date-picker v-model="taskForm.end_date" type="date" value-format="YYYY-MM-DD" style="width: 100%" />
-            </el-form-item>
-          </el-col>
         </el-row>
       </el-form>
       <template #footer>
@@ -368,7 +363,7 @@ import { getProject, getProjectMembers, addProjectMember, removeProjectMember } 
 import { getTaskTree, createTask, getTasks, updateTaskStatus } from '@/api/task'
 import { getStatistics, getGanttChart } from '@/api/report'
 import { getTeam } from '@/api/team'
-import { TASK_STATUS_MAP, PRIORITY_MAP, PRIORITY_LIST, PROJECT_STATUS_MAP } from '@/constants'
+import { TASK_STATUS_MAP, PRIORITY_MAP, PRIORITY_LIST, PROJECT_STATUS_MAP, canTransition } from '@/constants'
 import { formatDate, formatDateTime, isOverdue } from '@/utils'
 import TaskDetailDialog from '@/components/TaskDetailDialog.vue'
 
@@ -407,7 +402,7 @@ const GANTT_CELL_WIDTH = 40
 
 const taskForm = reactive({
   title: '', description: '', priority: 2, assignee_id: 0,
-  due_date: '', estimate: 0, start_date: '', end_date: '',
+  due_date: '', estimate: 0, start_date: '',
 })
 const addMemberForm = reactive({ user_id: 0, role: 2 })
 const taskRules = {
@@ -434,6 +429,12 @@ function openTaskDetail(row) {
   showTaskDetail.value = true
 }
 
+function openCreateTask() {
+  parentTask.value = null
+  resetTaskForm()
+  showCreateTask.value = true
+}
+
 function openAddSub(row) {
   parentTask.value = row
   resetTaskForm()
@@ -448,7 +449,6 @@ function resetTaskForm() {
   taskForm.due_date = ''
   taskForm.estimate = 0
   taskForm.start_date = ''
-  taskForm.end_date = ''
 }
 
 // ==================== 看板逻辑 ====================
@@ -465,6 +465,12 @@ async function handleKanbanDrop(event, newStatus) {
   const task = dragTask.value
   if (!task || task.status === newStatus) return
   const oldStatus = task.status
+  // 前端状态流转校验，与后端规则一致
+  if (!canTransition(oldStatus, newStatus, task.reviewer_id || 0)) {
+    ElMessage.warning(`不允许从「${TASK_STATUS_MAP[oldStatus]?.label}」移动到「${TASK_STATUS_MAP[newStatus]?.label}」`)
+    dragTask.value = null
+    return
+  }
   try {
     task.status = newStatus
     await updateTaskStatus(task.id, { status: newStatus })
@@ -507,8 +513,9 @@ const ganttDateRange = computed(() => {
       const d = dayjs(t.start_date)
       if (!minDate || d.isBefore(minDate)) minDate = d
     }
-    if (t.end_date) {
-      const d = dayjs(t.end_date)
+    const tEnd = t.end_date || t.due_date
+    if (tEnd) {
+      const d = dayjs(tEnd)
       if (!maxDate || d.isAfter(maxDate)) maxDate = d
     }
   })
@@ -543,16 +550,17 @@ const ganttTodayOffset = computed(() => {
 })
 
 function getGanttBarStyle(task) {
-  if (!ganttDateRange.value || !task.start_date || !task.end_date) return null
+  const taskEnd = task.end_date || task.due_date
+  if (!ganttDateRange.value || !task.start_date || !taskEnd) return null
   const startOffset = dayjs(task.start_date).startOf('day').diff(ganttDateRange.value.start.startOf('day'), 'day')
-  const endOffset = dayjs(task.end_date).startOf('day').diff(ganttDateRange.value.start.startOf('day'), 'day')
+  const endOffset = dayjs(taskEnd).startOf('day').diff(ganttDateRange.value.start.startOf('day'), 'day')
   if (startOffset < 0 || endOffset < startOffset) return null
   const width = Math.max((endOffset - startOffset + 1) * GANTT_CELL_WIDTH - 4, 20)
   return { left: `${startOffset * GANTT_CELL_WIDTH + 2}px`, width: `${width}px` }
 }
 
 function isTaskOverdue(task) {
-  return isOverdue(task.end_date, task.status)
+  return isOverdue(task.end_date || task.due_date, task.status)
 }
 
 async function loadGanttTasks() {
@@ -585,7 +593,6 @@ async function handleCreateTask() {
       assignee_id: taskForm.assignee_id || 0,
       due_date: taskForm.due_date || null,
       start_date: taskForm.start_date || null,
-      end_date: taskForm.end_date || null,
       estimate: taskForm.estimate,
     })
     ElMessage.success('任务创建成功')
@@ -648,7 +655,12 @@ async function loadData() {
 }
 
 watch(showCreateTask, (val) => {
-  if (val && !parentTask.value) resetTaskForm()
+  if (val) {
+    if (!parentTask.value) resetTaskForm()
+  } else {
+    // 关闭弹窗时清空父任务，避免残留影响下次"新建任务"
+    parentTask.value = null
+  }
 })
 
 onMounted(loadData)

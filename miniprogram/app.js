@@ -1,10 +1,18 @@
 // app.js
+// 根据小程序运行环境自动切换 API 地址
+// develop: 开发版（微信开发者工具） trial: 体验版 release: 正式版
+const envVersion = (wx.getAccountInfoSync && wx.getAccountInfoSync().miniProgram.envVersion) || 'develop'
+const BASE_URLS = {
+  develop: 'http://localhost:8080/api/v1',
+  trial: 'https://example.com/api/v1',   // TODO: 部署体验版后修改为实际地址
+  release: 'https://example.com/api/v1'  // TODO: 部署正式版后修改为实际地址
+}
+
 App({
   globalData: {
     userInfo: null,
     token: '',
-    // 开发环境地址，部署后改为线上服务器地址
-    baseUrl: 'http://localhost:8080/api/v1'
+    baseUrl: BASE_URLS[envVersion] || BASE_URLS.develop
   },
 
   onLaunch() {

@@ -57,9 +57,12 @@ Page({
   },
 
   async loadTasks(reset) {
+    if (this.data.loading && !reset) return
     if (reset) {
-      this.setData({ page: 1, hasMore: true, loading: true })
+      this.setData({ page: 1, hasMore: true })
     }
+    this.setData({ loading: true })
+    const seq = (this._loadSeq = (this._loadSeq || 0) + 1)
     try {
       const params = {
         page: this.data.page,
@@ -72,6 +75,7 @@ Page({
       if (this.data.currentProject > 0) params.project_id = this.data.currentProject
 
       const res = await get('/task', params)
+      if (seq !== this._loadSeq) return  // 已有新请求，丢弃过期结果
       const list = res.data?.list || res.data || []
       const total = res.data?.total || list.length
 
@@ -102,7 +106,7 @@ Page({
       })
     } catch (err) {
       console.error('加载任务失败:', err)
-      this.setData({ loading: false })
+      if (seq === this._loadSeq) this.setData({ loading: false })
     }
   },
 

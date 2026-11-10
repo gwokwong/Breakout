@@ -39,6 +39,7 @@
               :key="d.key"
               class="gantt-header-cell"
               :class="{ 'is-today': d.isToday }"
+              :style="{ width: headerCellWidth + 'px' }"
             >
               {{ d.label }}
             </div>
@@ -83,7 +84,6 @@ import { ref, computed, onMounted, watch } from 'vue'
 import dayjs from 'dayjs'
 import { getGanttChart } from '@/api/report'
 import { getProjects } from '@/api/project'
-import { TASK_STATUS } from '@/constants'
 import { isOverdue } from '@/utils'
 import TaskDetailDialog from '@/components/TaskDetailDialog.vue'
 
@@ -97,6 +97,9 @@ const zoomLevel = ref('week')
 const ganttRightRef = ref()
 
 const CELL_WIDTH = 40
+
+// 表头单元格宽度：日视图1天，周视图7天
+const headerCellWidth = computed(() => (zoomLevel.value === 'day' ? 1 : 7) * CELL_WIDTH)
 
 // 计算任务深度
 const tasksWithDepth = computed(() => {
@@ -289,7 +292,6 @@ onMounted(loadProjects)
 
     .gantt-header-cell {
       flex-shrink: 0;
-      width: 40px;
       height: 36px;
       display: flex;
       align-items: center;

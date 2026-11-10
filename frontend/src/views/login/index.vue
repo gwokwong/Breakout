@@ -92,7 +92,7 @@
         </el-tabs>
 
         <div class="form-footer">
-          <span class="text-muted">测试账号：13800000001 / 123456</span>
+          <span class="text-muted">破局 Breakout · 让团队聚焦真正卡住进度的问题</span>
         </div>
       </div>
     </div>

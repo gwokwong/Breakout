@@ -121,8 +121,8 @@ type AddRelationReq struct {
 // TaskTreeNode 任务树节点
 type TaskTreeNode struct {
 	Task
-	Progress     float64         `json:"progress"`
-	TotalSub     int             `json:"total_sub"`
-	CompletedSub int             `json:"completed_sub"`
-	Children     []TaskTreeNode  `json:"children"`
+	Progress     float64          `json:"progress"`
+	TotalSub     int              `json:"total_sub"`
+	CompletedSub int              `json:"completed_sub"`
+	Children     []*TaskTreeNode  `json:"children"`
 }

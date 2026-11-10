@@ -69,12 +69,19 @@ function upload(url, filePath, formData = {}) {
         ...(app.globalData.token ? { Authorization: 'Bearer ' + app.globalData.token } : {})
       },
       success(res) {
-        const body = JSON.parse(res.data)
+        let body
+        try {
+          body = JSON.parse(res.data)
+        } catch (e) {
+          wx.showToast({ title: '上传失败：响应格式错误', icon: 'none' })
+          reject(new Error('上传响应格式错误'))
+          return
+        }
         if (body.code === 200) {
           resolve(body)
         } else {
           wx.showToast({ title: body.message || '上传失败', icon: 'none' })
-          reject(new Error(body.message))
+          reject(new Error(body.message || '上传失败'))
         }
       },
       fail(err) {

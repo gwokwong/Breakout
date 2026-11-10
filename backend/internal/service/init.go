@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/gogf/gf/v2/frame/g"
@@ -10,6 +11,23 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
 )
+
+// safeInt 安全地将接口值转为int
+func safeInt(v interface{}, defaultVal int) int {
+	switch val := v.(type) {
+	case int:
+		return val
+	case int64:
+		return int(val)
+	case float64:
+		return int(val)
+	case string:
+		if n, err := strconv.Atoi(val); err == nil {
+			return n
+		}
+	}
+	return defaultVal
+}
 
 var (
 	DB *gorm.DB
@@ -31,7 +49,7 @@ func initDB() {
 		config["user"],
 		config["password"],
 		config["host"],
-		config["port"],
+		safeInt(config["port"], 3306),
 		config["name"],
 		config["charset"],
 	)
@@ -50,9 +68,9 @@ func initDB() {
 	}
 
 	// 设置连接池参数
-	sqlDB.SetMaxIdleConns(config["maxIdleConns"].(int))
-	sqlDB.SetMaxOpenConns(config["maxOpenConns"].(int))
-	sqlDB.SetConnMaxLifetime(time.Duration(config["connMaxLifetime"].(int)) * time.Second)
+	sqlDB.SetMaxIdleConns(safeInt(config["maxIdleConns"], 10))
+	sqlDB.SetMaxOpenConns(safeInt(config["maxOpenConns"], 100))
+	sqlDB.SetConnMaxLifetime(time.Duration(safeInt(config["connMaxLifetime"], 3600)) * time.Second)
 
 	g.Log().Info(context.Background(), "数据库连接成功")
 }

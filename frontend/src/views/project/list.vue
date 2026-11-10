@@ -156,7 +156,9 @@ async function loadProjects() {
 // 打开创建弹窗时重置表单
 import { watch } from 'vue'
 watch(showCreate, (val) => {
-  if (val && !editId.value) {
+  if (!val) {
+    editId.value = 0
+  } else if (!editId.value) {
     form.name = ''
     form.description = ''
     form.status = 1

@@ -126,17 +126,29 @@ function getContentPreview(content) {
   return text.length > 80 ? text.slice(0, 80) + '...' : text
 }
 
+function escapeHtml(str) {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
+}
+
 function renderContent(content) {
   if (!content) return '<p>暂无内容</p>'
-  // 如果是JSON格式尝试格式化
-  try {
-    const parsed = JSON.parse(content)
-    return `<pre style="white-space: pre-wrap;">${JSON.stringify(parsed, null, 2)}</pre>`
-  } catch {
-    // 如果包含HTML标签直接渲染，否则按段落渲染
-    if (content.includes('<')) return content
-    return content.split('\n').map((line) => `<p>${line}</p>`).join('')
-  }
+  // 先转义所有HTML，防止XSS
+  const escaped = escapeHtml(content)
+  // 按行渲染，保留markdown风格标题和列表
+  return escaped
+    .split('\n')
+    .map((line) => {
+      if (line.startsWith('## ')) return `<h4>${line.slice(3)}</h4>`
+      if (line.startsWith('- ')) return `<p class="report-li">${line}</p>`
+      if (line.trim() === '') return ''
+      return `<p>${line}</p>`
+    })
+    .join('')
 }
 
 function viewReport(row) {

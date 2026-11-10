@@ -65,7 +65,7 @@ func (s *middlewareService) Auth(r *ghttp.Request) {
 
 	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
 		return jwtSecret, nil
-	})
+	}, jwt.WithValidMethods([]string{"HS256"}))
 
 	if err != nil || !token.Valid {
 		r.Response.WriteJson(g.Map{

@@ -29,9 +29,10 @@ func recordAction(taskID, userID uint64, actionType int, prompt, response string
 	service.DB.Create(&action)
 }
 
-// DecomposeTask 任务分解
+// DecomposeTask 任务分解（仅生成建议，不直接创建；用户确认后由前端调用 CreateTask 创建）
 func (c *aiController) DecomposeTask(r *ghttp.Request) {
 	userID := r.GetCtxVar("user_id").Uint64()
+	teamID := r.GetCtxVar("team_id").Uint64()
 
 	var req model.DecomposeTaskReq
 	if err := r.Parse(&req); err != nil {
@@ -39,10 +40,27 @@ func (c *aiController) DecomposeTask(r *ghttp.Request) {
 		return
 	}
 
-	// 查找父任务
-	var parentTask model.Task
-	if err := service.DB.Where("id = ?", req.TaskID).First(&parentTask).Error; err != nil {
-		r.Response.WriteJson(g.Map{"code": http.StatusNotFound, "message": "任务不存在", "data": nil})
+	// 基准标题：优先使用请求中的标题，其次取父任务标题
+	baseTitle := req.Title
+	priority := 2
+	if req.TaskID > 0 {
+		var parentTask model.Task
+		if err := service.DB.Where("id = ?", req.TaskID).First(&parentTask).Error; err != nil {
+			r.Response.WriteJson(g.Map{"code": http.StatusNotFound, "message": "任务不存在", "data": nil})
+			return
+		}
+		// 校验任务归属团队
+		if parentTask.TeamID != teamID {
+			r.Response.WriteJson(g.Map{"code": http.StatusForbidden, "message": "无权操作此任务", "data": nil})
+			return
+		}
+		if baseTitle == "" {
+			baseTitle = parentTask.Title
+		}
+		priority = parentTask.Priority
+	}
+	if baseTitle == "" {
+		r.Response.WriteJson(g.Map{"code": http.StatusBadRequest, "message": "任务标题不能为空", "data": nil})
 		return
 	}
 
@@ -68,34 +86,25 @@ func (c *aiController) DecomposeTask(r *ghttp.Request) {
 		subCount = len(phases)
 	}
 
-	var subTasks []model.Task
+	// 仅生成建议列表，不写库（用户确认后由前端调用 CreateTask 创建）
+	suggestions := make([]g.Map, 0, subCount)
 	for i := 0; i < subCount; i++ {
-		subTask := model.Task{
-			TeamID:      parentTask.TeamID,
-			ProjectID:   parentTask.ProjectID,
-			Title:       parentTask.Title + phases[i].Suffix,
-			Description: phases[i].Description,
-			Status:      1, // 待办
-			Priority:    parentTask.Priority,
-			AssigneeID:  parentTask.AssigneeID,
-			CreatorID:   userID,
-			ParentID:    parentTask.ID,
-			SortOrder:   i + 1,
-			Estimate:    phases[i].Estimate,
-		}
-		if err := service.DB.Create(&subTask).Error; err != nil {
-			r.Response.WriteJson(g.Map{"code": http.StatusInternalServerError, "message": "创建子任务失败", "data": nil})
-			return
-		}
-		subTasks = append(subTasks, subTask)
+		suggestions = append(suggestions, g.Map{
+			"title":       baseTitle + phases[i].Suffix,
+			"description": phases[i].Description,
+			"estimate":    phases[i].Estimate,
+			"priority":    priority,
+		})
 	}
 
-	recordAction(req.TaskID, userID, 1, req.Title, "分解为"+strconv.Itoa(subCount)+"个子任务")
+	recordAction(req.TaskID, userID, 1, baseTitle, "生成"+strconv.Itoa(subCount)+"个子任务建议")
 
 	r.Response.WriteJson(g.Map{
 		"code":    http.StatusOK,
-		"message": "任务分解成功",
-		"data":    subTasks,
+		"message": "生成成功",
+		"data": g.Map{
+			"sub_tasks": suggestions,
+		},
 	})
 }
 
@@ -134,6 +143,7 @@ func (c *aiController) GenerateTaskDescription(r *ghttp.Request) {
 // SuggestAssignee 智能推荐负责人
 func (c *aiController) SuggestAssignee(r *ghttp.Request) {
 	userID := r.GetCtxVar("user_id").Uint64()
+	teamID := r.GetCtxVar("team_id").Uint64()
 
 	taskID := r.Get("task_id").Uint64()
 	if taskID == 0 {
@@ -147,38 +157,26 @@ func (c *aiController) SuggestAssignee(r *ghttp.Request) {
 		return
 	}
 
-	// 查找项目成员，推荐当前任务数最少的成员
-	var members []model.User
-	service.DB.Table("project_members pm").
-		Select("u.*").
-		Joins("JOIN users u ON u.id = pm.user_id").
-		Where("pm.project_id = ?", task.ProjectID).
-		Scan(&members)
+	// 校验任务归属团队
+	if task.TeamID != teamID {
+		r.Response.WriteJson(g.Map{"code": http.StatusForbidden, "message": "无权操作此任务", "data": nil})
+		return
+	}
 
+	// 查找项目成员及未完成任务数（单次JOIN查询避免N+1）
 	type candidate struct {
 		model.User
 		TaskCount int64 `json:"task_count"`
 	}
 	var candidates []candidate
-	for _, m := range members {
-		var taskCount int64
-		// 未完成且未关闭的任务数：状态5=已完成 6=已关闭
-		service.DB.Model(&model.Task{}).
-			Where("assignee_id = ? AND status NOT IN (5, 6)", m.ID).
-			Count(&taskCount)
-		candidates = append(candidates, candidate{User: m, TaskCount: taskCount})
-	}
-
-	// 按任务数升序排序，任务最少的优先
-	if len(candidates) > 1 {
-		for i := 0; i < len(candidates)-1; i++ {
-			for j := i + 1; j < len(candidates); j++ {
-				if candidates[j].TaskCount < candidates[i].TaskCount {
-					candidates[i], candidates[j] = candidates[j], candidates[i]
-				}
-			}
-		}
-	}
+	service.DB.Table("project_member pm").
+		Select("u.*, COUNT(t.id) as task_count").
+		Joins("JOIN user u ON u.id = pm.user_id").
+		Joins("LEFT JOIN task t ON t.assignee_id = u.id AND t.status NOT IN (5, 6)").
+		Where("pm.project_id = ?", task.ProjectID).
+		Group("u.id").
+		Order("task_count ASC").
+		Scan(&candidates)
 
 	recordAction(taskID, userID, 3, "推荐负责人", "任务ID "+strconv.FormatUint(taskID, 10))
 

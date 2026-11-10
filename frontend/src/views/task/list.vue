@@ -194,20 +194,42 @@ async function handleDelete(row) {
 async function handleBatchStatus(status) {
   if (!status || !selectedIds.value.length) return
   await ElMessageBox.confirm(`确定将选中的${selectedIds.value.length}个任务状态改为「${TASK_STATUS_MAP[status]?.label}」吗？`, '提示', { type: 'warning' })
+  let ok = 0
+  let fail = 0
   for (const id of selectedIds.value) {
-    await updateTaskStatus(id, { status })
+    try {
+      await updateTaskStatus(id, { status })
+      ok++
+    } catch {
+      fail++
+    }
   }
-  ElMessage.success('批量更新成功')
+  if (fail) {
+    ElMessage.warning(`批量更新完成：成功${ok}个，失败${fail}个`)
+  } else {
+    ElMessage.success('批量更新成功')
+  }
   batchStatus.value = null
   await loadTasks()
 }
 
 async function handleBatchDelete() {
   await ElMessageBox.confirm(`确定删除选中的${selectedIds.value.length}个任务吗？`, '警告', { type: 'warning' })
+  let ok = 0
+  let fail = 0
   for (const id of selectedIds.value) {
-    await deleteTask(id)
+    try {
+      await deleteTask(id)
+      ok++
+    } catch {
+      fail++
+    }
   }
-  ElMessage.success('批量删除成功')
+  if (fail) {
+    ElMessage.warning(`批量删除完成：成功${ok}个，失败${fail}个`)
+  } else {
+    ElMessage.success('批量删除成功')
+  }
   await loadTasks()
 }
 

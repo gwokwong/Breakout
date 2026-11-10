@@ -74,9 +74,9 @@
     <button class="btn-action btn-primary" wx:if="{{canStart}}" bindtap="handleStart">开始任务</button>
     <button class="btn-action btn-primary" wx:if="{{canSubmit}}" bindtap="handleSubmitReview">提交复核</button>
     <button class="btn-action btn-primary" wx:if="{{canReview}}" bindtap="handleReviewPass">复核通过</button>
-    <button class="btn-action btn-outline" wx:if="{{canReview}}" bindtap="setData" data-showReviewModal="{{true}}">复核退回</button>
+    <button class="btn-action btn-outline" wx:if="{{canReview}}" bindtap="showReviewFail">复核退回</button>
     <button class="btn-action btn-primary" wx:if="{{canAccept}}" bindtap="handleAcceptPass">验收通过</button>
-    <button class="btn-action btn-outline" wx:if="{{canAccept}}" bindtap="handleAcceptFail">验收退回</button>
+    <button class="btn-action btn-outline" wx:if="{{canAccept}}" bindtap="showAcceptFail">验收退回</button>
     <button class="btn-action btn-outline" wx:if="{{canClose}}" bindtap="showClose">关闭任务</button>
     <button class="btn-action btn-danger" wx:if="{{canBlock}}" bindtap="showBlock">标记阻塞</button>
     <button class="btn-action btn-outline" bindtap="showComment">添加评论</button>
@@ -127,6 +127,18 @@
       <view class="modal-actions">
         <button class="btn-action btn-outline" bindtap="closeModal">取消</button>
         <button class="btn-action btn-danger" bindtap="handleReviewFail">确认退回</button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 验收退回弹窗 -->
+  <view class="modal-mask" wx:if="{{showAcceptModal}}" bindtap="closeModal">
+    <view class="modal" catchtap="">
+      <view class="modal-title">验收退回</view>
+      <textarea class="modal-input" placeholder="请输入退回原因..." value="{{acceptComment}}" bindinput="onAcceptCommentInput" maxlength="500" />
+      <view class="modal-actions">
+        <button class="btn-action btn-outline" bindtap="closeModal">取消</button>
+        <button class="btn-action btn-danger" bindtap="handleAcceptFail">确认退回</button>
       </view>
     </view>
   </view>
